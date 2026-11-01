@@ -385,10 +385,12 @@ fun AccountDialog(activity: MainActivity, onDismiss: () -> Unit) {
     var creating by rememberSaveable { mutableStateOf(false) }
     var email by rememberSaveable { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var repeat by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    val ready = !busy && '@' in email && password.isNotEmpty()
+    // A new account's password typed twice, the same.
+    val ready = !busy && '@' in email && password.isNotEmpty() && (!creating || repeat == password)
 
     fun run(action: suspend () -> String?, onDone: () -> Unit) {
         busy = true
@@ -427,8 +429,22 @@ fun AccountDialog(activity: MainActivity, onDismiss: () -> Unit) {
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         )
+        // Said once the second is typed out in full and still not the same, not at every letter.
+        val mismatch = stringResource(R.string.passwords_differ).takeIf { creating && repeat.isNotEmpty() && repeat.length >= password.length && repeat != password }
+        if (creating) {
+            Field(
+                repeat,
+                { repeat = it },
+                placeholder = "",
+                label = stringResource(R.string.repeat_password),
+                error = mismatch,
+                inDialog = true,
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            )
+        }
         // Read out by TalkBack as it appears.
-        error?.let { Text(it, style = type(14f, 20f, Fonts.MEDIUM), color = appColors.red, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
+        (error ?: mismatch)?.let { Text(it, style = type(14f, 20f, Fonts.MEDIUM), color = appColors.red, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
         // The links stay in the accent, never greyed as if broken: tapped before the fields are filled, they say what
         // they need.
         Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
