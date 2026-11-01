@@ -42,8 +42,11 @@ import kotlin.math.sin
 /** A dot held this long (and still) can be dragged. */
 internal const val DRAG_HOLD_MS = 150L
 
-/** A dot held this long opens its menu: the system's long press is too quick to hold a dot still for. */
-internal const val MENU_MS = 600L
+/**
+ * A dot held this long opens its menu: Android's own "Medium" touch & hold delay. A drag starts well before it, so a
+ * finger that rests a moment before moving the dot drags it rather than opening the menu.
+ */
+internal const val MENU_MS = 1000L
 
 @SuppressLint("ViewConstructor")
 class DotView(context: Context, private val actions: Actions) : View(context) {
