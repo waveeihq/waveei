@@ -738,7 +738,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
 
     /** The check badge: 0 → 1.18 → 1 when Auto-send turns on, 1 → 0 when it turns off. */
     private fun badgeScale(): Float {
-        if (snap()) return if (model.autoSend) 1f else 0f
+        if (still()) return if (model.autoSend) 1f else 0f
         val t = (now() - badgeAt).toFloat()
         return if (model.autoSend) {
             val q = EMPHASIZED_DECELERATE.getInterpolation(((t - BADGE_DELAY_MS) / BADGE_IN_MS).coerceIn(0f, 1f))
@@ -1185,12 +1185,12 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
     private var liveShift = 0f
     private var liveAt = 0L
 
-    private fun liveSlide(): Float = if (snap()) 1f else STANDARD.getInterpolation(((now() - liveAt).toFloat() / LIVE_SLIDE_MS).coerceIn(0f, 1f))
+    private fun liveSlide(): Float = if (still()) 1f else STANDARD.getInterpolation(((now() - liveAt).toFloat() / LIVE_SLIDE_MS).coerceIn(0f, 1f))
 
     /** One item at a time; a change cross-fades: the old one out and up, the new one in from below. */
     private fun drawStatus(canvas: Canvas) {
         val r = rects.getValue(Key.STATUS)
-        val p = if (snap()) 1f else ((now() - statusAt).toFloat() / STATUS_FADE_MS).coerceIn(0f, 1f)
+        val p = if (still()) 1f else ((now() - statusAt).toFloat() / STATUS_FADE_MS).coerceIn(0f, 1f)
         val old = previous?.takeIf { p < 1f }
         if (old != null) layer(canvas, r, (1f - 2 * p).coerceAtLeast(0f), -STATUS_SHIFT * s * p) { drawLook(canvas, old, r) }
         if (old == null) {
@@ -1421,6 +1421,9 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
     /** Screenshots and Remove animations show every transition at its end. */
     private fun snap(): Boolean = frameTimeMs != null || reduceMotion()
 
+    /** Every transition at its end: the keyboard changes at once (see [KeyboardMotion]). */
+    private fun still(): Boolean = snap() || !KeyboardMotion.animates()
+
     /** A value easing to its target over a time, from wherever it was when the target changed. */
     private inner class Tween(private var ms: Long, private var curve: Interpolator = STANDARD, private val delay: Long = 0L) {
         private var from = 0f
@@ -1437,12 +1440,12 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         }
 
         fun value(): Float {
-            if (snap()) return target
+            if (still()) return target
             val p = ((now() - at - delay).toFloat() / ms).coerceIn(0f, 1f)
             return from + (target - from) * curve.getInterpolation(p)
         }
 
-        fun moving(): Boolean = !snap() && now() - at < ms + delay
+        fun moving(): Boolean = !still() && now() - at < ms + delay
 
         /** Straight to [value], no easing. */
         fun jump(value: Float) {
@@ -1511,7 +1514,8 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
 
         fun scale(): Float {
             val target = pressTarget(key)
-            if (snap()) return if (down) target else 1f
+            // At once, and a quick tap still shows the press for MIN_HOLD_MS.
+            if (still()) return if (held()) target else 1f
             val t = (now() - at).toFloat()
             return if (down) {
                 scaleFrom + (target - scaleFrom) * STANDARD.getInterpolation((t / PRESS_MS).coerceIn(0f, 1f))
@@ -1524,7 +1528,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         }
 
         fun tint(): Float {
-            if (snap()) return if (down) 1f else 0f
+            if (still()) return if (held()) 1f else 0f
             val t = (now() - at).toFloat()
             if (!down && t < 0f) return holdTint + (1f - holdTint) * ((now() - downAt) / PRESS_MS).coerceIn(0f, 1f)
             return if (down) tintFrom + (1f - tintFrom) * (t / PRESS_MS).coerceIn(0f, 1f) else tintFrom * (1f - (t / TINT_OUT_MS).coerceIn(0f, 1f))
@@ -1536,7 +1540,10 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
             return if (target >= 1f) 0f else ((1f - scale()) / (1f - target)).coerceIn(0f, 1f)
         }
 
-        fun moving(): Boolean = !snap() && (now() - at).toFloat() < if (down) PRESS_MS else SPRING_MS.toFloat()
+        fun moving(): Boolean =
+            if (still()) !snap() && !down && now() < at else (now() - at).toFloat() < if (down) PRESS_MS else SPRING_MS.toFloat()
+
+        private fun held() = down || now() < at
     }
 
     private val presses = EnumMap<Key, Press>(Key::class.java)
@@ -1588,7 +1595,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
 
     private fun updateSpring() {
         val t = now()
-        if (snap()) {
+        if (still()) {
             micScale = micTarget()
             micVelocity = 0f
         } else {
@@ -1674,7 +1681,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
                 backRise = 0f
             }
         }
-        val k = if (snap()) 1f else STANDARD.getInterpolation(((t - waterAt).toFloat() / waterMs).coerceIn(0f, 1f))
+        val k = if (still()) 1f else STANDARD.getInterpolation(((t - waterAt).toFloat() / waterMs).coerceIn(0f, 1f))
         fillNow = lerp(waterFrom[0], fill, k)
         crestNow = lerp(waterFrom[1], crest, k)
         backCrestNow = lerp(waterFrom[2], backCrest, k)
@@ -1716,9 +1723,9 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         if (snap()) return false
         val t = now()
         if (tweens.any { it.moving() } || presses.values.any { it.moving() } || !springSettled()) return true
-        if (t - statusAt < STATUS_FADE_MS || t - liveAt < LIVE_SLIDE_MS || t - waterAt < waterMs) return true
+        if (!still() && (t - statusAt < STATUS_FADE_MS || t - liveAt < LIVE_SLIDE_MS || t - waterAt < waterMs)) return true
         if (t - landedAt < LANDED_MS || t - retryAt < RETRY_RING_FROM_MS + RETRY_RING_MS) return true
-        if (t - badgeAt < BADGE_DELAY_MS + BADGE_IN_MS) return true
+        if (!still() && t - badgeAt < BADGE_DELAY_MS + BADGE_IN_MS) return true
         if (panelOpen()) return false
         return model.state == Dictation.State.RECORDING || model.state == Dictation.State.PROCESSING
     }
@@ -2019,7 +2026,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
     private fun springBack(panel: View) {
         panelAnimator?.cancel()
         val from = panel.translationY
-        if (reduceMotion() || from == 0f) {
+        if (still() || from == 0f) {
             panel.translationY = 0f
             return
         }

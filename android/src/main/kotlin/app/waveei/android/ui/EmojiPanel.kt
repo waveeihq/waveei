@@ -303,7 +303,7 @@ class EmojiPanel(
         if (now == chipTo) return
         chipTo = now
         chipAnimator?.cancel()
-        if (!ValueAnimator.areAnimatorsEnabled()) {
+        if (!KeyboardMotion.animates()) {
             chipAt = now.toFloat()
             return
         }
@@ -321,7 +321,7 @@ class EmojiPanel(
     private fun scrollToCategory(i: Int) {
         val to = (sectionRow[i] * rowHeight()).coerceIn(0f, maxScroll())
         scroller.forceFinished(true)
-        if (!ValueAnimator.areAnimatorsEnabled()) return scrollTo(to)
+        if (!KeyboardMotion.animates()) return scrollTo(to)
         scroller.startScroll(0, scroll.toInt(), 0, (to - scroll).toInt(), CATEGORY_SCROLL_MS)
         postInvalidateOnAnimation()
     }
@@ -398,7 +398,7 @@ class EmojiPanel(
         popup.set(left.roundToInt().toFloat(), top.roundToInt().toFloat(), (left + w).roundToInt().toFloat(), (top + h).roundToInt().toFloat())
         popupHover = -1
         popupDown = -1
-        if (ValueAnimator.areAnimatorsEnabled()) {
+        if (KeyboardMotion.animates()) {
             popupShown = 0f
             ValueAnimator.ofFloat(0f, 1f).apply {
                 duration = POPUP_MS
