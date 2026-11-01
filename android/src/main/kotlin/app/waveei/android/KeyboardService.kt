@@ -576,7 +576,7 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
 
     /** The app on one of its screens (MainActivity.EXTRA_SCREEN). */
     private fun openApp(screen: String) {
-        startActivity(Intent(this, MainActivity::class.java).putExtra(MainActivity.EXTRA_SCREEN, screen).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        startActivity(Intent(this, MainActivity::class.java).putExtra(MainActivity.EXTRA_SCREEN, screen).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), MainActivity.splashless())
     }
 
     /**
@@ -641,7 +641,7 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
                 (note == null && Dictation.message == null && Account.freeUsedUp && !Account.signedIn) -> openApp("ACCOUNT")
             Dictation.message?.let(::planChip) != null || note?.let(::planChip) != null || (note == null && Account.freeUsedUp) -> openApp("PLAN")
             note == getString(R.string.no_account) || note == getString(R.string.no_mic_permission) ->
-                startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), MainActivity.splashless())
         }
     }
 

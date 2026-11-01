@@ -1,22 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The light back wave waits out the blank start (160 of 940 ms, see splash_appear), then rises into place from near
-     the tile's bottom (32 of the icon's 108, here 22 of the splash viewport), drifting in from the left, over 650 ms.
-     Keyframes, not a start delay: a delayed animator would show the drawable's own state, the finished icon, meanwhile. -->
+<!-- The light back wave rises into place from near the tile's bottom (32 of the icon's 108, here 22 of the splash
+     viewport), drifting in from the left, over 650 ms. -->
 <set xmlns:android="http://schemas.android.com/apk/res/android">
     <objectAnimator
-        android:duration="940"
-        android:interpolator="@android:interpolator/linear">
-        <propertyValuesHolder android:propertyName="translateY" android:valueType="floatType">
-            <keyframe android:fraction="0" android:value="22" />
-            <keyframe android:fraction="0.1702" android:value="22" />
-            <keyframe android:fraction="0.8617" android:interpolator="@interpolator/splash_ease_out" android:value="0" />
-            <keyframe android:fraction="1" android:value="0" />
-        </propertyValuesHolder>
-        <propertyValuesHolder android:propertyName="translateX" android:valueType="floatType">
-            <keyframe android:fraction="0" android:value="-4.13" />
-            <keyframe android:fraction="0.1702" android:value="-4.13" />
-            <keyframe android:fraction="0.8617" android:interpolator="@interpolator/splash_ease_out" android:value="0" />
-            <keyframe android:fraction="1" android:value="0" />
-        </propertyValuesHolder>
-    </objectAnimator>
+        android:duration="650"
+        android:interpolator="@interpolator/splash_ease_out"
+        android:propertyName="translateY"
+        android:valueFrom="22"
+        android:valueTo="0"
+        android:valueType="floatType" />
+    <objectAnimator
+        android:duration="650"
+        android:interpolator="@interpolator/splash_ease_out"
+        android:propertyName="translateX"
+        android:valueFrom="-4.13"
+        android:valueTo="0"
+        android:valueType="floatType" />
 </set>

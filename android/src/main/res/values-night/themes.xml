@@ -6,10 +6,9 @@
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowBackground">#0E1520</item>
-        <!-- Launch screen: the page alone for a moment, then the mark fades in and its waves rise into place, on the night
-             page colour (app-page). -->
+        <!-- Launch screen: the mark's waves rise into place on the night page colour (app-page). -->
         <item name="android:windowSplashScreenBackground">#0E1520</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_icon_animated</item>
-        <item name="android:windowSplashScreenAnimationDuration">940</item>
+        <item name="android:windowSplashScreenAnimationDuration">780</item>
     </style>
 </resources>

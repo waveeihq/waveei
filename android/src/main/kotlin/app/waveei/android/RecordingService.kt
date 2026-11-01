@@ -50,7 +50,7 @@ class RecordingService : Service() {
             )
             val open = PendingIntent.getActivity(
                 context, 0, Intent(context, MainActivity::class.java).putExtra(MainActivity.EXTRA_SCREEN, "BUFFER"),
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT, MainActivity.splashless(),
             )
             val stop = PendingIntent.getService(context, 1, Intent(context, RecordingService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_IMMUTABLE)
             return Notification.Builder(context, CHANNEL)

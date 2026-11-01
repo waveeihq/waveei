@@ -1,6 +1,7 @@
 package app.waveei.android
 
 import android.Manifest
+import android.app.ActivityOptions
 import android.app.AppOpsManager
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
@@ -21,6 +22,7 @@ import android.provider.Settings
 import android.view.View
 import android.view.animation.PathInterpolator
 import android.view.inputmethod.InputMethodManager
+import android.window.SplashScreen
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -159,33 +161,31 @@ class MainActivity : ComponentActivity() {
     // Launch screen (the theme's animated mark; Android shows it until the first frame, no longer)
 
     /**
-     * Leaves into the app: the page colour fades while the mark grows a touch in its full colours, then the mark goes in
-     * a short fade at the end (a long one would grey it over the night page). At once with animations off.
+     * Leaves into the app in two steps, never the mark over the content: first the mark grows a touch and fades on the
+     * whole page colour, then the bare page fades into the app. A launch with no mark (opened by the keyboard or a dot,
+     * see [splashless]) only fades the page. At once with animations off.
      */
     private fun fadeSplash() = splashScreen.setOnExitAnimationListener { view ->
         if (!ValueAnimator.areAnimatorsEnabled()) return@setOnExitAnimationListener view.remove()
         val page = view.background
         val icon = view.iconView
-        val parts = mutableListOf<Animator>(
-            if (page != null) {
-                ValueAnimator.ofInt(255, 0).apply { addUpdateListener { page.alpha = it.animatedValue as Int } }
-            } else {
-                ObjectAnimator.ofFloat(view, View.ALPHA, 1f, 0f)
-            }.setDuration(SPLASH_PAGE_FADE_MS),
-        )
+        val pageFade = if (page != null) {
+            ValueAnimator.ofInt(255, 0).apply { addUpdateListener { page.alpha = it.animatedValue as Int } }
+        } else {
+            ObjectAnimator.ofFloat(view, View.ALPHA, 1f, 0f)
+        }.setDuration(SPLASH_PAGE_FADE_MS)
+        val parts = mutableListOf<Animator>()
         if (icon != null) {
             parts += ObjectAnimator.ofPropertyValuesHolder(
                 icon,
                 PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, SPLASH_EXIT_SCALE),
                 PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f, SPLASH_EXIT_SCALE),
-            ).setDuration(SPLASH_EXIT_MS)
-            parts += ObjectAnimator.ofFloat(icon, View.ALPHA, 1f, 0f).apply {
-                startDelay = SPLASH_EXIT_MS - SPLASH_ICON_FADE_MS
-                duration = SPLASH_ICON_FADE_MS
-            }
+                PropertyValuesHolder.ofFloat(View.ALPHA, 1f, 0f),
+            ).setDuration(SPLASH_ICON_EXIT_MS)
         }
+        parts += pageFade
         AnimatorSet().apply {
-            playTogether(parts)
+            playSequentially(parts)
             interpolator = PathInterpolator(0.3f, 0f, 0.8f, 0.15f)
             addListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: Animator) = view.remove()
@@ -480,14 +480,19 @@ class MainActivity : ComponentActivity() {
     companion object {
         const val EXTRA_SCREEN = "screen"
 
+        /**
+         * Start options for opening the app from the keyboard, a dot or the recording notice: if Android shows the launch
+         * screen (the app's screen not running yet), only the page colour, without the mark, as such a launch is quick.
+         */
+        fun splashless(): Bundle =
+            ActivityOptions.makeBasic().setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_SOLID_COLOR).toBundle()
+
         /** The app op behind Android's "Restricted setting" for sideloaded apps (AppOpsManager's hidden OPSTR). */
         const val RESTRICTED_SETTINGS_OP = "android:access_restricted_settings"
 
-        /** The launch screen's exit (Material 3 emphasized accelerate): 250 ms in all, the page colour gone by 200 ms,
-         * the mark fading only in the last 80 ms. */
-        const val SPLASH_EXIT_MS = 250L
-        const val SPLASH_PAGE_FADE_MS = 200L
-        const val SPLASH_ICON_FADE_MS = 80L
+        /** The launch screen's exit (Material 3 emphasized accelerate): the mark goes in 200 ms, then the page in 150. */
+        const val SPLASH_ICON_EXIT_MS = 200L
+        const val SPLASH_PAGE_FADE_MS = 150L
         const val SPLASH_EXIT_SCALE = 1.06f
 
         val PRIVACY_POLICY = "${BuildConfig.SOURCE_URL}/blob/main/PRIVACY.md"

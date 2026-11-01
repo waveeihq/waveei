@@ -644,6 +644,7 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
                         Intent(this@DotService, MainActivity::class.java)
                             .putExtra(MainActivity.EXTRA_SCREEN, SETTINGS_SCREEN)
                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                        MainActivity.splashless(),
                     )
                 }.onFailure { log("could not open the settings: ${it.javaClass.simpleName}") }
             }
