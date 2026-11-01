@@ -172,7 +172,12 @@ fun HomeScreen(activity: MainActivity, nav: Navigator) {
                 ) {
                     AccessGroup(access)
                     Group {
-                        NavRow(stringResource(R.string.group_account), icon = "user-circle", titleWeight = Fonts.ROW) { nav.go(Screen.ACCOUNT) }
+                        NavRow(
+                            stringResource(R.string.group_account), icon = "user-circle",
+                            // Signed out, what signing in adds; the free tier only.
+                            value = if (FreeTier.ON && !activity.signedIn() && !activity.accountWaiting()) stringResource(R.string.account_bonus) else null,
+                            titleWeight = Fonts.ROW,
+                        ) { nav.go(Screen.ACCOUNT) }
                         Divider()
                         NavRow(stringResource(R.string.pro), icon = "waveei", value = if (activity.paymentFailed()) stringResource(R.string.payment_failed) else null, titleWeight = Fonts.ROW) { nav.go(Screen.PLAN) }
                         Divider()

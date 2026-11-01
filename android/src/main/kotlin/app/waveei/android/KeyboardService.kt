@@ -636,6 +636,9 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         when {
             Dictation.message == terms || note == terms || (note == null && Dictation.message == null && micDisabledReason == null && prefs.termsPending) -> openApp("HOME")
             Dictation.message != null && Dictation.retryId != null && planChip(Dictation.message!!) == null -> Unit
+            // Signed out, the week's free minutes used up: signing in adds more, so Account, where Sign in is.
+            Dictation.message?.let(::planChip) == getString(R.string.free_used_up_tap) || note?.let(::planChip) == getString(R.string.free_used_up_tap) ||
+                (note == null && Dictation.message == null && Account.freeUsedUp && !Account.signedIn) -> openApp("ACCOUNT")
             Dictation.message?.let(::planChip) != null || note?.let(::planChip) != null || (note == null && Account.freeUsedUp) -> openApp("PLAN")
             note == getString(R.string.no_account) || note == getString(R.string.no_mic_permission) ->
                 startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -650,10 +653,13 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
      */
     private fun planChip(status: String): String? = when {
         status.contains(getString(R.string.error_unverified)) -> getString(R.string.error_unverified)
-        status.contains(getString(R.string.free_used_up)) -> getString(R.string.free_used_up_chip)
-        status.contains(getString(R.string.tide_needed)) -> getString(R.string.free_used_up_tap)
+        status.contains(getString(R.string.free_used_up)) -> usedUpChip()
+        status.contains(getString(R.string.tide_needed)) -> getString(R.string.tide_needed_tap)
         else -> null
     }
+
+    /** The week's free minutes used up: signed out, the chip offers the account's extra minutes; signed in, it says so. */
+    private fun usedUpChip(): String = getString(if (Account.signedIn) R.string.free_used_up_chip else R.string.free_used_up_tap)
 
     override fun onInsertHere() {
         insertHere?.let { insertEntry(it) }
@@ -1199,7 +1205,7 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
                 Dictation.message != null -> Dictation.message!! to messageKind(Dictation.message!!)
                 micDisabledReason != null -> getString(micDisabledReason!!) to KeyboardView.StatusKind.HINT
                 prefs.termsPending -> getString(R.string.agree_new_terms) to KeyboardView.StatusKind.ACTION
-                Account.freeUsedUp -> getString(R.string.free_used_up_chip) to KeyboardView.StatusKind.ACTION
+                Account.freeUsedUp -> usedUpChip() to KeyboardView.StatusKind.ACTION
                 else -> getString(R.string.tap_to_talk) to KeyboardView.StatusKind.HINT
             }
         }

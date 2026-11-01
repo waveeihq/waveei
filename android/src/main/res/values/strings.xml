@@ -108,11 +108,16 @@
     <string name="source_code_description">The app’s code is open to read. FSL-1.1; each version turns Apache 2.0 after two years</string>
     <string name="sign_in">Sign in</string>
     <string name="sign_in_description">Dictation needs your Waveei account</string>
-    <string name="sign_in_optional">Only for Waveei Tide</string>
-    <string name="free_used_up">30 free minutes used this week</string>
+    <string name="sign_in_optional">Sign in for 15 more free minutes a week</string>
+    <!-- Home’s Account row, signed out: what signing in adds. -->
+    <string name="account_bonus">+15 min a week</string>
+    <string name="free_used_up">This week’s free minutes are used up</string>
     <string name="tide_day_used_up">4 hours of dictation used today</string>
-    <string name="free_used_up_tap">Get Waveei Tide to dictate</string>
-    <!-- The keyboard's chip once the week's free minutes are used up: says what happened; a tap opens Waveei Tide. -->
+    <!-- The keyboard's chip once the week's free minutes are used up, signed out: a tap opens Account to sign in. -->
+    <string name="free_used_up_tap">Sign in for 15 more minutes</string>
+    <!-- The keyboard's chip when dictation needs Waveei Tide: a tap opens Waveei Tide. -->
+    <string name="tide_needed_tap">Get Waveei Tide to dictate</string>
+    <!-- The keyboard's chip once the week's free minutes are used up, signed in: says what happened; a tap opens Waveei Tide. -->
     <string name="free_used_up_chip">Free minutes used up</string>
     <string name="pro_description">No weekly limit. Just talk.</string>
     <string name="waiting_description">Confirm your email: open the link we sent</string>
@@ -243,7 +248,7 @@
     <string name="enable_in_settings">Open keyboard settings</string>
     <string name="onboarding_floating">Two small dots that float over any app. One swaps keyboards. The other dictates — no keyboard needed.</string>
     <string name="your_account">Your account</string>
-    <string name="onboarding_account">Not now is fine. An account is only for Waveei Tide — sign in from Home any time.</string>
+    <string name="onboarding_account">Not now is fine. Sign in from Home any time for 15 more free minutes a week.</string>
     <string name="back">Back</string>
     <string name="agree_and_start">Agree and start</string>
     <string name="terms_line">By tapping “Agree and start”, you accept the %1$s. The %2$s says what leaves your phone.</string>
