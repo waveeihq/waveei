@@ -276,8 +276,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         strokeCap = Paint.Cap.ROUND
     }
     private var recGlowSize = 0f
-    private val brightWater = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val brightShader = LinearGradient(0f, 0f, 0f, 1f, BRIGHT_WATER, WATER_STOPS, Shader.TileMode.CLAMP)
+    private val arcFade = ArcFade()
     private val busyPaint = Paint()
     private val busyMatrix = ColorMatrix()
     private var busyShown = -1f
@@ -958,13 +957,6 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         waterShader.setLocalMatrix(waterMatrix)
         water.shader = waterShader
         canvas.drawPath(path, water)
-        // A loud voice brightens the water a little, towards the bright set.
-        if (brightNow > BRIGHT_MIN) {
-            brightShader.setLocalMatrix(waterMatrix)
-            brightWater.shader = brightShader
-            brightWater.alpha = (brightNow * 255).toInt()
-            canvas.drawPath(path, brightWater)
-        }
         frontPath.set(path)
         // The surface line: the front wave's top edge, whiter with the voice.
         surfaceLine(left, surface, front, size)
@@ -1036,8 +1028,14 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
             canvas.drawOval(tmp, recGlow)
             canvas.drawOval(tmp, recCore)
         } else {
+            // Its ends fade in, as soft as its blurred sides.
+            val shader = arcFade.shader(micX, micY, start, sweep, color)
+            recGlow.shader = shader
+            recCore.shader = shader
             canvas.drawArc(tmp, start, sweep, false, recGlow)
             canvas.drawArc(tmp, start, sweep, false, recCore)
+            recGlow.shader = null
+            recCore.shader = null
         }
     }
 
@@ -1604,11 +1602,10 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
     // The water
 
     private var level = 0f
-    // The voice above its noise floor: the water's height follows its swell, the waves and the brightness its level.
+    // The voice above its noise floor: the water's height follows its swell, the waves its level; its colour stays.
     private val voice = VoiceEnvelope()
     private var swell = 0f
     private var voiceNow = 0f
-    private var brightNow = 0f
     private var levelAt = 0L
     private val heardAt = LongArray(HEARD)
     private val heard = FloatArray(HEARD)
@@ -1636,7 +1633,6 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         level = voice.level
         swell = voice.swell
         voiceNow = if (recording) level else 0f
-        brightNow = BRIGHT_MIX * voiceNow
         heardIndex = (heardIndex + 1) % HEARD
         heardAt[heardIndex] = t
         heard[heardIndex] = level
@@ -2401,10 +2397,6 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         /** Processing: a 90° arc on a 16 % track of the same colour, a turn per SPIN_MS. */
         const val BUSY_ARC = 90f
         const val BUSY_TRACK = 0.16f
-        /** The water's bright set, mixed in by up to [BRIGHT_MIX] with the voice. */
-        val BRIGHT_WATER = intArrayOf(0xFF8AD2FF.toInt(), 0xFF4AA8FF.toInt(), 0xFF2F86F0.toInt())
-        const val BRIGHT_MIX = 0.45f
-        const val BRIGHT_MIN = 0.01f
         const val MIC_PRESSED = 0.94f
         const val MIC_PRESS_HOLD_MS = 110L
         /** Pressed: 99 %, 0.3 dp lower, halo 70 %, rim 50 %, a 3 dp edge shadow at 24 %. */

@@ -306,6 +306,7 @@ class DotView(context: Context, private val actions: Actions) : View(context) {
         color = DotColors.RING
         maskFilter = BlurMaskFilter(REC_CORE_BLUR * density, BlurMaskFilter.Blur.NORMAL)
     }
+    private val arcFade = ArcFade()
     private val recGlow = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
@@ -328,7 +329,6 @@ class DotView(context: Context, private val actions: Actions) : View(context) {
 
     // Gradients made once in a unit box and moved onto the dot with a matrix: nothing is made per frame.
     private val water = LinearGradient(0f, 0f, 0f, 1f, KeyboardColors.WATER, WATER_STOPS, Shader.TileMode.CLAMP)
-    private val brightWater = LinearGradient(0f, 0f, 0f, 1f, BRIGHT_WATER, WATER_STOPS, Shader.TileMode.CLAMP)
     private val shade = RadialGradient(0f, 0f, 1f, intArrayOf(0, 0, DotColors.SHADE), floatArrayOf(0f, SHADE_FROM, 1f), Shader.TileMode.CLAMP)
 
     private val slop = ViewConfiguration.get(context).scaledTouchSlop
@@ -462,8 +462,14 @@ class DotView(context: Context, private val actions: Actions) : View(context) {
         canvas.drawOval(tmp, recCore)
         recCore.alpha = (REC_CORE_ALPHA * 255).toInt()
         val start = if (still) -90f else (SystemClock.uptimeMillis() % SPIN_MS) / SPIN_MS.toFloat() * 360f - 90f
+        // Its ends fade in, as soft as its blurred sides, as on the keyboard's mic.
+        val shader = arcFade.shader(cx, cy, start, BUSY_ARC, DotColors.RING)
+        recGlow.shader = shader
+        recCore.shader = shader
         canvas.drawArc(tmp, start, BUSY_ARC, false, recGlow)
         canvas.drawArc(tmp, start, BUSY_ARC, false, recCore)
+        recGlow.shader = null
+        recCore.shader = null
     }
 
     /** Moves the water towards its state; true while it is still on its way there. */
@@ -553,14 +559,6 @@ class DotView(context: Context, private val actions: Actions) : View(context) {
         paint.color = OPAQUE
         paint.shader = water
         canvas.drawPath(front, paint)
-        // A loud voice brightens the water a little, as on the mic.
-        val bright = if (mode == Mode.RECORDING) BRIGHT_MIX * heard else 0f
-        if (bright > 0.01f) {
-            brightWater.setLocalMatrix(matrix)
-            paint.shader = brightWater
-            paint.color = Palette.alpha(OPAQUE, bright)
-            canvas.drawPath(front, paint)
-        }
         paint.shader = null
         surface.reset()
         for (i in 0..WAVE_STEPS) {
@@ -892,9 +890,7 @@ class DotView(context: Context, private val actions: Actions) : View(context) {
         const val SPIN_MS = 1100L
         /** Processing, the water greys as the mic's: saturation 0.45. */
         const val BUSY_SATURATION = 0.45f
-        /** The bright water mixed in with the voice, and the surface line's alpha in a silence (up to 1 when loud). */
-        val BRIGHT_WATER = intArrayOf(0xFF8AD2FF.toInt(), 0xFF4AA8FF.toInt(), 0xFF2F86F0.toInt())
-        const val BRIGHT_MIX = 0.45f
+        /** The surface line's alpha in a silence (up to 1 when loud). */
         const val SURFACE_ALPHA = 0.8f
 
         /** How long the dot takes to fade in or to its resting opacity, and to grow on a touch or shrink back. */
