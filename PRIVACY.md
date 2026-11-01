@@ -117,10 +117,11 @@ dictations as described above. Nothing else on your screen is stored or sent.
 
 ## Updates
 
-When opened, every few hours, the app asks GitHub for the latest release of its own repository, and About › Check
-for updates asks at once; Check automatically turns the first off. GitHub sees a request for the release, with your
-IP address, under GitHub's privacy statement; nothing about you goes with it. An update downloads and installs only
-when you tap Install.
+When opened, every few hours, and twice a day while it is closed, the app asks GitHub for the latest release of its
+own repository, and About › Check for updates asks at once; Check automatically turns both off. A new version is told
+once in a notification, if you allow notifications. GitHub sees a request for the release, with your IP address,
+under GitHub's privacy statement; nothing about you goes with it. An update downloads and installs only when you tap
+Install.
 
 ## Payments
 

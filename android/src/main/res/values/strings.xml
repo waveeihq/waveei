@@ -483,7 +483,10 @@
     <string name="check">Check</string>
     <string name="check_updates">Check for updates</string>
     <string name="auto_update_check">Check automatically</string>
-    <string name="auto_update_check_description">When the app opens, every few hours</string>
+    <string name="auto_update_check_description">Every few hours, with a notice when one is out</string>
+    <string name="new_versions">New versions</string>
+    <string name="new_version_out">Waveei %1$s is out</string>
+    <string name="new_version_tap">Tap to install it</string>
     <string name="percent">%1$d%%</string>
     <string name="checks_latest">Checks for a newer version</string>
     <string name="screenshot_offer">Images in clipboard</string>

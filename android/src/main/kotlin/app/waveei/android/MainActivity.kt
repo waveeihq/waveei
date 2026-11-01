@@ -81,6 +81,7 @@ class MainActivity : ComponentActivity() {
 
     private val micPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { refresh++ }
     private val photosPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { refresh++ }
+    private val notificationsPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { DebugLog.add("update: notifications ${if (it) "allowed" else "refused"}") }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -447,6 +448,12 @@ class MainActivity : ComponentActivity() {
                 result.onSuccess { release ->
                     available = release?.takeIf { it.versionCode > versionCode() }
                     updateStatus = available?.let { getString(R.string.version, it.name) } ?: getString(R.string.up_to_date)
+                    // The first new version found is when Android's notification prompt makes sense: the next ones
+                    // are told even with the app closed.
+                    if (available != null && prefs.autoUpdateCheck && !prefs.notificationsAsked) {
+                        prefs.notificationsAsked = true
+                        notificationsPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
                 }.onFailure {
                     // The network's own error text ("Unable to resolve host…") said in plain words, as the install does.
                     updateStatus = when (it) {

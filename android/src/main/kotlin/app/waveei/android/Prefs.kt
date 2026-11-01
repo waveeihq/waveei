@@ -140,11 +140,17 @@ class Prefs(context: Context) {
     /** Photos were asked for once, as the microphone. */
     var photosAsked by boolean("photos_asked", false)
 
-    /** The app looks for an update by itself when opened, now and then. */
+    /** The app looks for an update by itself when opened, now and then, and with it closed ([UpdateCheckJob]). */
     var autoUpdateCheck by boolean("auto_update_check", true)
 
     /** When the app last looked for an update by itself, so it does not look at every start. */
     var lastUpdateCheck by long("last_update_check", 0L)
+
+    /** The newest version a notification has told of: each is told once ([UpdateCheckJob]). */
+    var notifiedVersion by long("notified_version", 0L)
+
+    /** Notifications were asked for once, when a check first found a new version. */
+    var notificationsAsked by boolean("notifications_asked", false)
 
     /** Setup has just ended: Home shows the usage guide once, then clears it. */
     var guidePending by boolean("guide_pending", false)

@@ -23,5 +23,6 @@ class App : Application() {
         BufferStore.init(this)
         Learning.init(this)
         Dictation.init(this)
+        UpdateCheckJob.schedule(this)
     }
 }
