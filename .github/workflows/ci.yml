@@ -93,8 +93,8 @@ jobs:
           VERSION_CODE: ${{ needs.build.outputs.version }}
         run: gh release upload "build-$VERSION_CODE" "$(find apk -name mapping.txt | head -1)"
 
-  # A signed build of main becomes the latest release: the app's own update check looks there, and the APK has one
-  # stable link, releases/latest/download/waveei.apk.
+  # A signed build of main becomes the latest release, where the app's own update check looks. The APK is named by its
+  # version, as waveei-1.2.5.apk, so downloaded builds tell themselves apart.
   publish:
     needs: build
     if: github.ref == 'refs/heads/main' && needs.build.outputs.signed == 'true'
@@ -115,8 +115,9 @@ jobs:
           VERSION_NAME: ${{ needs.build.outputs.name }}
         # The tag stays build-<code>: installed builds read the code from it. The title is the version people see.
         run: |
-          cp "$(find apk -name 'android-release.apk' | head -1)" waveei.apk
-          gh release create "build-$VERSION_CODE" waveei.apk \
+          file="waveei-$VERSION_NAME.apk"
+          cp "$(find apk -name 'android-release.apk' | head -1)" "$file"
+          gh release create "build-$VERSION_CODE" "$file" \
             --title "$VERSION_NAME" --generate-notes --target "$GITHUB_SHA" --latest
 
   # Each published build starts the developer build of the same commit in the private dev repository. DEV_TOKEN may

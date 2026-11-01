@@ -117,7 +117,7 @@
   <h1>Talk.<br>It types.<i></i></h1>
   <p class="lead"><b>You talk faster than you type.</b> Waveei turns what you say into clean text, right where you are typing. Cross-platform by design. Now on Android.</p>
   <div class="cta">
-    <a class="btn fill" href="https://github.com/waveeihq/waveei/releases/latest/download/waveei.apk">Get Waveei for Android</a>
+    <a class="btn fill" href="https://github.com/waveeihq/waveei/releases/latest" data-apk>Get Waveei for Android</a>
     <a class="btn ghost" href="#pricing">See pricing</a>
   </div>
   <p class="note">Android 13 or newer. 30 free minutes every week, no sign-up; 45 with an account.</p>
@@ -205,8 +205,18 @@
     <a href="https://github.com/waveeihq/waveei/blob/main/PRIVACY.md">Privacy</a>
     <a href="https://github.com/waveeihq/waveei/blob/main/TERMS.md">Terms</a>
     <a href="https://github.com/waveeihq/waveei">Source code</a>
-    <a class="sp" href="https://github.com/waveeihq/waveei/releases/latest/download/waveei.apk">Get Waveei for Android</a>
+    <a class="sp" href="https://github.com/waveeihq/waveei/releases/latest" data-apk>Get Waveei for Android</a>
   </footer>
 </div>
+<script>
+  // Each build's APK is named by its version: the buttons download the latest one, or open its release page.
+  fetch("https://api.github.com/repos/waveeihq/waveei/releases/latest")
+    .then(r => r.ok ? r.json() : null)
+    .then(release => {
+      const apk = release && release.assets.find(a => a.name.endsWith(".apk"));
+      if (apk) document.querySelectorAll("a[data-apk]").forEach(a => a.href = apk.browser_download_url);
+    })
+    .catch(() => {});
+</script>
 </body>
 </html>

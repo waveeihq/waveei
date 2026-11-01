@@ -11,7 +11,7 @@ Cross-platform by design. Now on Android.
 </p>
 
 <p align="center">
-<a href="https://github.com/waveeihq/waveei/releases/latest/download/waveei.apk"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/button-get-dark.png"><img src=".github/assets/button-get.png" height="48" width="228" alt="Get Waveei for Android"></picture></a>
+<a href="https://github.com/waveeihq/waveei/releases/latest"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/button-get-dark.png"><img src=".github/assets/button-get.png" height="48" width="228" alt="Get Waveei for Android"></picture></a>
 &nbsp;
 <a href="PRIVACY.md"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/button-privacy-dark.png"><img src=".github/assets/button-privacy.png" height="48" width="108" alt="Privacy"></picture></a>
 &nbsp;
@@ -71,10 +71,10 @@ The app needs the Waveei server, which is not part of this repository and not op
 
 ## Install
 
-The latest build is `waveei.apk` in this repository's [Releases](https://github.com/waveeihq/waveei/releases/latest),
+The latest build is `waveei-<version>.apk` in this repository's [Releases](https://github.com/waveeihq/waveei/releases/latest),
 for Android 13 or newer. The app looks for a newer one by itself and installs it when you tap Install (About › Updates).
 
-Every build is signed with the same key. Its certificate's SHA-256, which `apksigner verify --print-certs waveei.apk`
+Every build is signed with the same key. Its certificate's SHA-256, which `apksigner verify --print-certs waveei-<version>.apk`
 shows:
 
 ```
