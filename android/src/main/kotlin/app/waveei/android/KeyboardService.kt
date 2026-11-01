@@ -236,7 +236,7 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         Dictation.addTarget(this)
         BufferStore.addListener(bufferChanged)
         // Back in a field after another keyboard: what the person corrected there in the last dictation.
-        info.packageName?.takeIf { micDisabledReason == null && Learning.watches(it) }?.let { app -> fieldText()?.let { Learning.seen(app, it) } }
+        info.packageName?.takeIf { micDisabledReason == null && Learning.watches(it) }?.let { app -> fieldText()?.let { Learning.seen(app, Learning.Field(null, signature(info)), it) } }
         Dictation.deliverWaiting()
         // The week's free minutes used up: the mic stays grey until the server says Tide was bought.
         if (Account.freeUsedUp) Dictation.refreshPlan { main.post(::render) }
@@ -397,6 +397,9 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
 
     override val incognito: Boolean
         get() = (currentInputEditorInfo?.imeOptions ?: 0) and EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING != 0
+
+    override val learningField: Learning.Field?
+        get() = signature(currentInputEditorInfo)?.takeIf { isInputViewShown }?.let { Learning.Field(null, it) }
 
     // KeyboardView.Actions
 

@@ -2,6 +2,7 @@ package app.waveei.android
 
 import android.content.Context
 import android.os.SystemClock
+import android.view.accessibility.AccessibilityNodeInfo
 import app.waveei.core.text.Corrections
 
 /**
@@ -9,9 +10,24 @@ import app.waveei.core.text.Corrections
  * straight into the vocabulary, with nothing to confirm, and the word it put right leaves it, so a wrong one learned
  * before is replaced by correcting it again. The field is looked at while it is edited (the accessibility
  * service's text events, our keyboard coming back to it); its text stays in memory, only the corrected words are kept.
+ * Only the very field the dictation went into counts: another field of the same app is neither compared nor ends the
+ * watch.
  */
 object Learning {
-    private class Watch(val text: String, val app: String, val until: Long) {
+    /**
+     * The field a dictation went into, as each side can tell it: the accessibility service's node, our keyboard's field
+     * signature ([KeyboardService.signature]); either may be unknown.
+     */
+    class Field(val node: AccessibilityNodeInfo?, val signature: String?) {
+        /** Whether [other], seen later, is this field; with nothing to compare by, any field of the app is. */
+        fun same(other: Field): Boolean = when {
+            node != null && other.node != null -> node == other.node
+            signature != null && other.signature != null -> KeyboardService.sameField(signature, other.signature)
+            else -> node == null && signature == null
+        }
+    }
+
+    private class Watch(val text: String, val app: String, val field: Field, val until: Long) {
         var fixes = emptyList<Pair<String, String>>()
     }
 
@@ -22,19 +38,19 @@ object Learning {
         prefs = Prefs(context.applicationContext)
     }
 
-    /** A dictation went into a field of [app]: its edits are looked at from now on. */
-    fun inserted(text: String, app: String) {
+    /** A dictation went into [field] of [app]: its edits are looked at from now on. */
+    fun inserted(text: String, app: String, field: Field) {
         commit()
-        watch = Watch(text, app, SystemClock.elapsedRealtime() + WATCH_MS)
+        watch = Watch(text, app, field, SystemClock.elapsedRealtime() + WATCH_MS)
     }
 
     /** Whether a dictation in [app] is being watched. */
     fun watches(app: String): Boolean = watch?.app == app
 
-    /** A field of [app] holds [text] now. The dictation gone from it (sent, cleared) ends the watch. */
-    fun seen(app: String, text: String) {
+    /** [field] of [app] holds [text] now. The dictation gone from it (sent, cleared) ends the watch. */
+    fun seen(app: String, field: Field, text: String) {
         val current = watch ?: return
-        if (app != current.app) return
+        if (app != current.app || !current.field.same(field)) return
         if (SystemClock.elapsedRealtime() > current.until) return commit()
         current.fixes = Corrections.heldFixes(current.text, text) ?: return commit()
     }

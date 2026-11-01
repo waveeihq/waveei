@@ -62,6 +62,9 @@ object Dictation {
         /** The field asks for no personalised learning: do not keep the text after insertion. */
         val incognito: Boolean
 
+        /** The field in front as this target tells it apart, for [Learning]; null where it cannot. */
+        val learningField: Learning.Field? get() = null
+
         /** Whether this target can tell if [field], a field signature, is the one with the focus. */
         fun knowsField(field: String): Boolean
 
@@ -827,7 +830,7 @@ object Dictation {
             } else {
                 BufferStore.update(id) { it.copy(status = BufferStatus.INSERTED, raw = raw, text = text, error = null) }
                 BufferStore.dropAudio(id)
-                entry?.app?.takeIf { it.isNotEmpty() }?.let { Learning.inserted(text, it) }
+                entry?.app?.takeIf { it.isNotEmpty() }?.let { Learning.inserted(text, it, learningField()) }
             }
             DebugLog.add("dictation: inserted ${text.length} chars${if (styled) " (styled)" else ""} +${SystemClock.elapsedRealtime() - stoppedAt} ms after stop")
         } else {
@@ -873,13 +876,19 @@ object Dictation {
         endWait(wait, target, "back in its app")
     }
 
+    /** The field a dictation just went into, as every target can tell it: it has the focus now. */
+    private fun learningField() = Learning.Field(
+        targets.firstNotNullOfOrNull { it.learningField?.node },
+        targets.firstNotNullOfOrNull { it.learningField?.signature },
+    )
+
     private fun endWait(wait: Waiting, target: Target, how: String) {
         waiting = null
         if (target.incognito) {
             BufferStore.delete(wait.id)
         } else {
             BufferStore.update(wait.id) { it.copy(status = BufferStatus.INSERTED) }
-            Learning.inserted(wait.text, wait.app)
+            Learning.inserted(wait.text, wait.app, learningField())
         }
         DebugLog.add("dictation: $how, inserted ${wait.text.length} chars")
         notifyChanged()

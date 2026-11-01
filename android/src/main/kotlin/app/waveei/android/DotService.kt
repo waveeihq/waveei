@@ -28,6 +28,7 @@ import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityWindowInfo
 import android.view.animation.DecelerateInterpolator
+import android.view.inputmethod.EditorInfo
 import app.waveei.android.ui.DotColors
 import app.waveei.android.ui.DotMenu
 import app.waveei.android.ui.DotView
@@ -178,7 +179,7 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
         }
         // Any keyboard's edits of a field: a word corrected in the last dictation is offered for the vocabulary.
         if (event.eventType == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED) {
-            if (!event.isPassword) event.packageName?.toString()?.takeIf(Learning::watches)?.let { Learning.seen(it, event.text.joinToString("")) }
+            if (!event.isPassword) event.packageName?.toString()?.takeIf(Learning::watches)?.let { Learning.seen(it, Learning.Field(event.source, null), event.text.joinToString("")) }
             return
         }
         // Back in the app a finished dictation was made in: it goes into the field there, whichever keyboard is up.
@@ -1056,7 +1057,15 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
             "focused ${node.isFocused}, ${currentText(node).length} chars"
     }
 
-    override val incognito: Boolean get() = false
+    /**
+     * The focused field asks for no personalised learning, whichever keyboard is up: read from its EditorInfo, which
+     * Android gives an accessibility service with flagInputMethodEditor (Android 13+).
+     */
+    override val incognito: Boolean
+        get() = (inputMethod?.currentInputEditorInfo?.imeOptions ?: 0) and EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING != 0
+
+    override val learningField: Learning.Field?
+        get() = focusedField()?.let { Learning.Field(it, null) }
 
     /** The field as the dot can tell it apart: its app, view id, hint and input type. */
     private fun signature(node: AccessibilityNodeInfo): String =
