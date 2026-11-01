@@ -1366,8 +1366,8 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         /** How far below its place the keyboard's content starts rising as the keyboard comes up. */
         private const val RISE_DP = 24f
 
-        /** How long the keys take to rise and fade in as the keyboard comes up. */
-        private const val RISE_MS = 200L
+        /** How long the keys take to rise and fade in as the keyboard comes up: the alpha's soft rise. */
+        private const val RISE_MS = 380L
 
         /** How long after its planned end a stalled rise is put right. */
         private const val RISE_SETTLE_MS = 150L
