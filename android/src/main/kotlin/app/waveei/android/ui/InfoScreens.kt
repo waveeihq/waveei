@@ -345,13 +345,8 @@ fun DeleteAccountRow(activity: MainActivity, nav: Navigator) {
 fun TideRow(activity: MainActivity, nav: Navigator) = NavRow(
     stringResource(R.string.pro),
     stringResource(R.string.plan),
-    value = stringResource(
-        when {
-            activity.paymentFailed() -> R.string.payment_failed
-            activity.tide() -> R.string.plan_row_value_on
-            else -> R.string.plan_row_value_off
-        },
-    ),
+    // As on Home: nothing while all is well, only a failed payment.
+    value = if (activity.paymentFailed()) stringResource(R.string.payment_failed) else null,
 ) { nav.go(Screen.PLAN) }
 
 /** The card at the top of Account and About: a 56 dp tile and two lines. */

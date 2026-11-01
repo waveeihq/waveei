@@ -385,8 +385,6 @@
     <string name="license_phosphor">Phosphor Icons — MIT License</string>
     <string name="send_again_description">A new link to the same email</string>
     <string name="send">Send</string>
-    <string name="plan_row_value_on">On</string>
-    <string name="plan_row_value_off">Off</string>
     <string name="keyboard_on">Keyboard on</string>
     <string name="mic_blocked">The microphone is blocked. Turn it on in Android settings.</string>
     <string name="open_settings">Open settings</string>
