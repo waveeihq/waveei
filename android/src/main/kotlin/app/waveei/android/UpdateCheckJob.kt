@@ -28,7 +28,7 @@ class UpdateCheckJob : JobService() {
                     val shown = getSystemService(NotificationManager::class.java).areNotificationsEnabled()
                     if (shown && release != null && release.versionCode > installed && release.versionCode > prefs.notifiedVersion) {
                         prefs.notifiedVersion = release.versionCode
-                        notify(this, release.name)
+                        notify(this)
                         DebugLog.add("update: new version notified")
                     }
                 }
@@ -59,8 +59,8 @@ class UpdateCheckJob : JobService() {
             )
         }
 
-        /** "Waveei 1.2.3 is out"; a tap opens About, where Install is. */
-        private fun notify(context: Context, name: String) {
+        /** "New update available", no version number; a tap opens About, where Install is. */
+        private fun notify(context: Context) {
             val manager = context.getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(NotificationChannel(CHANNEL, context.getString(R.string.new_versions), NotificationManager.IMPORTANCE_DEFAULT))
             val open = Intent(context, MainActivity::class.java)
@@ -71,7 +71,7 @@ class UpdateCheckJob : JobService() {
                 NOTIFICATION_ID,
                 Notification.Builder(context, CHANNEL)
                     .setSmallIcon(R.drawable.ic_launcher_monochrome)
-                    .setContentTitle(context.getString(R.string.new_version_out, name))
+                    .setContentTitle(context.getString(R.string.new_version_out))
                     .setContentText(context.getString(R.string.new_version_tap))
                     .setContentIntent(tap)
                     .setAutoCancel(true)
