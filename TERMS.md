@@ -14,8 +14,8 @@ Waveei.
 
 ## Free minutes
 
-Without Waveei Tide you can dictate a number of minutes each week, as the app says when you start. They are for one
-person's own use. We may change the number, and say so in the app first.
+Without Waveei Tide you can dictate a number of minutes each week, as the app says when you start and when you sign
+in. They are for one person's own use. We may change the number, and say so in the app first.
 
 ## Waveei Tide
 

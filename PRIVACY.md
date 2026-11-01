@@ -47,7 +47,9 @@ Only what it needs to run the service you asked for and to keep it safe:
   needs Waveei Tide.
 - **Free minutes.** The server counts the minutes you dictate each week under a short, one-way hash of your account and
   one of this phone (a hash of the Android id, which the app sends only with free-tier requests). Each week's count is
-  deleted 35 days after its last use.
+  deleted 35 days after its last use. An account with a confirmed email gets more minutes, unless the email is at a
+  throwaway email service: the server checks its domain against a public list of them on each request, and keeps
+  neither the email nor the result.
 
 ## What the app sends only if you choose
 
@@ -105,8 +107,9 @@ dictations as described above. Nothing else on your screen is stored or sent.
 - **Without signing in.** On your first dictation the app creates an anonymous account for you, so the free minutes
   can be counted. It has no name or email. It is deleted 30 days after it was created, and the app then creates a new
   one.
-- **Signing in.** With an email and password, for Waveei Tide. Accounts are kept by our account provider in the United
-  States, which also records the IP address and app of each sign-in and keeps those IP addresses for a few weeks.
+- **Signing in.** With an email and password, for more free minutes and for Waveei Tide. Accounts are kept by our
+  account provider in the United States, which also records the IP address and app of each sign-in and keeps those IP
+  addresses for a few weeks.
 - **Settings sync, with Waveei Tide.** The server keeps your settings, vocabulary and snippets under your account, so
   each phone signed in to it has the same. It keeps one copy, replaced as you change them, in Belgium (EU), until you
   delete the account. What belongs to one phone stays on it: its keyboards, permissions, the dots and their places,
