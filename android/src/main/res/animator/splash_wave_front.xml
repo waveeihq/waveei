@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The deeper front wave starts just below the tile (30 of the icon's 108, here 20.63 of the splash viewport) and
-     settles last, drifting in from the right, over 780 ms. No start delay, so the drawable's own state stays the icon. -->
+<!-- The deeper front wave waits out the blank start (160 of 940 ms, see splash_appear), then starts just below the tile
+     (30 of the icon's 108, here 20.63 of the splash viewport) and settles last, drifting in from the right, over 780 ms.
+     Keyframes, not a start delay, so the drawable's own state stays the icon. -->
 <set xmlns:android="http://schemas.android.com/apk/res/android">
     <objectAnimator
-        android:duration="780"
-        android:interpolator="@interpolator/splash_ease_out"
-        android:propertyName="translateY"
-        android:valueFrom="20.63"
-        android:valueTo="0"
-        android:valueType="floatType" />
-    <objectAnimator
-        android:duration="780"
-        android:interpolator="@interpolator/splash_ease_out"
-        android:propertyName="translateX"
-        android:valueFrom="4.13"
-        android:valueTo="0"
-        android:valueType="floatType" />
+        android:duration="940"
+        android:interpolator="@android:interpolator/linear">
+        <propertyValuesHolder android:propertyName="translateY" android:valueType="floatType">
+            <keyframe android:fraction="0" android:value="20.63" />
+            <keyframe android:fraction="0.1702" android:value="20.63" />
+            <keyframe android:fraction="1" android:interpolator="@interpolator/splash_ease_out" android:value="0" />
+        </propertyValuesHolder>
+        <propertyValuesHolder android:propertyName="translateX" android:valueType="floatType">
+            <keyframe android:fraction="0" android:value="4.13" />
+            <keyframe android:fraction="0.1702" android:value="4.13" />
+            <keyframe android:fraction="1" android:interpolator="@interpolator/splash_ease_out" android:value="0" />
+        </propertyValuesHolder>
+    </objectAnimator>
 </set>

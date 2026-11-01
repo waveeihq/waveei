@@ -46,6 +46,15 @@
         </vector>
     </aapt:attr>
     <target
+        android:name="tile"
+        android:animation="@animator/splash_appear" />
+    <target
+        android:name="back_wave"
+        android:animation="@animator/splash_appear" />
+    <target
+        android:name="front_wave"
+        android:animation="@animator/splash_appear" />
+    <target
         android:name="back"
         android:animation="@animator/splash_wave_back" />
     <target
