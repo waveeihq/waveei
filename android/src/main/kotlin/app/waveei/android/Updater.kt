@@ -134,8 +134,13 @@ class Updater(private val context: Context) {
         }
     }
 
-    /** The public repository's API, read without a sign-in. */
-    private fun Request.Builder.api() = header("X-GitHub-Api-Version", "2022-11-28")
+    /**
+     * GitHub's API: the public repository's read without a sign-in; a developer build's private one with the read-only
+     * token CI gave it (UPDATE_TOKEN), which OkHttp drops on the redirect to GitHub's file storage.
+     */
+    private fun Request.Builder.api() = header("X-GitHub-Api-Version", "2022-11-28").apply {
+        if (BuildConfig.UPDATE_TOKEN.isNotEmpty()) header("Authorization", "Bearer ${BuildConfig.UPDATE_TOKEN}")
+    }
 
     companion object {
         /** The install in progress or its error; snapshot state, so the screens follow it. Null when idle. */

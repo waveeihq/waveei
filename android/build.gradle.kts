@@ -10,8 +10,10 @@ val sourceUrl = providers.gradleProperty("sourceUrl").get()
 val gcpProject = providers.gradleProperty("gcpProject").get()
 val firebaseAppId = providers.gradleProperty("firebaseAppId").get()
 val firebaseApiKey = providers.gradleProperty("firebaseApiKey").get()
-// Updates come from this repository's releases.
-val updateRepo = sourceUrl.removePrefix("https://github.com/")
+// Updates come from this repository's releases; a developer build's CI names its own private repository and a
+// read-only token for it (UPDATE_REPO, UPDATE_TOKEN), which no public build has.
+val updateRepo = providers.environmentVariable("UPDATE_REPO").orNull ?: sourceUrl.removePrefix("https://github.com/")
+val updateToken = providers.environmentVariable("UPDATE_TOKEN").orNull.orEmpty()
 // The upload key, from CI secrets. Without it the release build comes out unsigned.
 val signingKeystore = providers.environmentVariable("SIGNING_KEYSTORE_PATH").orNull
 val signingPassword = providers.environmentVariable("SIGNING_PASSWORD").orNull
@@ -38,6 +40,7 @@ android {
         buildConfigField("String", "FIREBASE_APP_ID", "\"$firebaseAppId\"")
         buildConfigField("String", "FIREBASE_API_KEY", "\"$firebaseApiKey\"")
         buildConfigField("String", "UPDATE_REPO", "\"$updateRepo\"")
+        buildConfigField("String", "UPDATE_TOKEN", "\"$updateToken\"")
     }
 
     // The shipped build: not debuggable, shrunk by R8, so the app runs at full speed.
