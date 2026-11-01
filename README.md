@@ -48,7 +48,7 @@ Cross-platform by design. Now on Android.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset=".github/assets/pricing-dark.png">
-  <img src=".github/assets/pricing.png" width="100%" alt="Start free. Talk without limits. Free, $0: 30 minutes every week, no sign-up, no card, Style and Translate, floating dots and History. Waveei Tide, $6 a month: everything in Free, plus no weekly limit, live words as you talk, and your settings and words on all your phones. Cancel any time; tax where it applies. Zero data retention on our side: your audio and dictated text are never stored.">
+  <img src=".github/assets/pricing.png" width="100%" alt="Start free. Talk without limits. Free, $0: 30 minutes every week, 45 with an account; no sign-up, no card; Style and Translate, floating dots and History. Waveei Tide, $6 a month: everything in Free, plus no weekly limit, live words as you talk, and your settings and words on all your phones. Cancel any time; tax where it applies. Zero data retention on our side: your audio and dictated text are never stored.">
 </picture>
 
 ## How it works
