@@ -468,6 +468,15 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         rects.getOrPut(Key.PASTE_CLOSE, ::RectF).set(closeLeft - CLOSE_REACH * s, pastePill.top, pastePill.right, pastePill.bottom)
     }
 
+    /** The mic's touch-down, once its ring is on screen; a start that fails fades the ring out. */
+    private fun startMic() {
+        actions.onMicDown()
+        if (model.state == Dictation.State.IDLE) {
+            recMark.to(0f, REC_OUT_MS, STANDARD_ACCELERATE)
+            invalidate()
+        }
+    }
+
     // Model changes start the transitions, each from where it is now.
 
     private fun changed(old: Model, new: Model) {
@@ -1797,11 +1806,18 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
                 press(key, true)
                 performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
                 when (key) {
-                    // Capture starts on touch-down.
+                    // Capture starts on touch-down. The recording ring is drawn first, in this frame: opening the mic
+                    // can hold the main thread for a moment, and the ring must not wait for it. A start that fails
+                    // leaves the model idle, and the ring fades out.
                     Key.MIC -> {
                         micDownAt = now()
                         startedOnDown = model.state == Dictation.State.IDLE && model.micEnabled
-                        if (startedOnDown) actions.onMicDown()
+                        if (startedOnDown) {
+                            recMark.jump(1f)
+                            invalidate()
+                            // After this frame is drawn; a panel not on screen draws nothing, so it starts at once.
+                            if (isAttachedToWindow) postOnAnimation { post(::startMic) } else startMic()
+                        }
                     }
                     Key.BACKSPACE -> {
                         actions.onBackspace(word = false)
