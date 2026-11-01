@@ -127,6 +127,7 @@
     <string name="email">Email</string>
     <string name="password">Password</string>
     <string name="create_account">Create account</string>
+    <string name="create">Create</string>
     <string name="forgot_password">Forgot password</string>
     <string name="sign_out">Sign out</string>
     <string name="confirmation_sent">We sent a link to %1$s. Open it, then come back here.</string>
@@ -349,7 +350,6 @@
     <string name="retry_busy">Finish the current dictation first</string>
     <string name="retry_gone">Recording no longer on this phone</string>
     <!-- The sign-in dialog's links, tapped before the fields are filled. -->
-    <string name="enter_email_password">Enter your email and a password first</string>
     <string name="enter_email_first">Enter your email first</string>
     <string name="replace_with">Replace with</string>
     <string name="license_texts">License texts</string>

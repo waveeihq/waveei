@@ -376,9 +376,13 @@ fun rememberBufferEntries(): List<BufferEntry> {
 /** A dictation still being recorded or transcribed shows once it has its text. */
 private fun shownEntries() = BufferStore.all().filter { !it.status.active }.sortedByDescending { it.id }
 
-/** Sign in, or create the Waveei account: a new account gets a confirmation link by email. */
+/**
+ * Sign in, or create the Waveei account: Create account turns the dialog into its own form, with the same two fields;
+ * a new account gets a confirmation link by email.
+ */
 @Composable
 fun AccountDialog(activity: MainActivity, onDismiss: () -> Unit) {
+    var creating by rememberSaveable { mutableStateOf(false) }
     var email by rememberSaveable { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
@@ -402,7 +406,7 @@ fun AccountDialog(activity: MainActivity, onDismiss: () -> Unit) {
     }
 
     DialogCard(onDismiss) {
-        DialogTitle(stringResource(R.string.sign_in))
+        DialogTitle(stringResource(if (creating) R.string.create_account else R.string.sign_in))
         val emailError = error?.takeIf { '@' !in email }
         Field(
             email,
@@ -428,17 +432,12 @@ fun AccountDialog(activity: MainActivity, onDismiss: () -> Unit) {
         // The links stay in the accent, never greyed as if broken: tapped before the fields are filled, they say what
         // they need.
         Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            LinkText(stringResource(R.string.create_account), !busy) {
-                if (!ready) {
-                    error = activity.getString(R.string.enter_email_password)
-                    return@LinkText
-                }
-                run({ Account.create(activity, email, password) }) {
-                    Toast.makeText(activity, activity.getString(R.string.confirmation_sent, email), Toast.LENGTH_LONG).show()
-                    signedIn()
-                }
+            // Each form links to the other; what is typed stays.
+            LinkText(stringResource(if (creating) R.string.sign_in else R.string.create_account), !busy) {
+                creating = !creating
+                error = null
             }
-            LinkText(stringResource(R.string.forgot_password), !busy) {
+            if (!creating) LinkText(stringResource(R.string.forgot_password), !busy) {
                 if ('@' !in email) {
                     error = activity.getString(R.string.enter_email_first)
                     return@LinkText
@@ -448,8 +447,15 @@ fun AccountDialog(activity: MainActivity, onDismiss: () -> Unit) {
                 }
             }
         }
-        DialogButtons(stringResource(R.string.cancel), stringResource(R.string.sign_in), confirmEnabled = ready, onDismiss = onDismiss) {
-            run({ Account.signIn(activity, email, password) }, ::signedIn)
+        DialogButtons(stringResource(R.string.cancel), stringResource(if (creating) R.string.create else R.string.sign_in), confirmEnabled = ready, onDismiss = onDismiss) {
+            if (creating) {
+                run({ Account.create(activity, email, password) }) {
+                    Toast.makeText(activity, activity.getString(R.string.confirmation_sent, email), Toast.LENGTH_LONG).show()
+                    signedIn()
+                }
+            } else {
+                run({ Account.signIn(activity, email, password) }, ::signedIn)
+            }
         }
     }
 }

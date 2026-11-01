@@ -39,8 +39,8 @@ import kotlin.math.sin
  * over blue water that follows the voice. 18 dp at rest, ×1.3 while touched or [open]. It knows nothing about
  * dictation: [DotService] sets its [mode] and handles its [Actions].
  */
-/** A dot held this long (and still) can be dragged. */
-internal const val DRAG_HOLD_MS = 150L
+/** A dot held this long (and still) can be dragged: long enough that a finger brushing past it does not move it. */
+internal const val DRAG_HOLD_MS = 75L
 
 /**
  * A dot held this long opens its menu: Android's own "Medium" touch & hold delay. A drag starts well before it, so a
