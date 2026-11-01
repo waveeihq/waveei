@@ -86,10 +86,13 @@ fun UsageGuide(page: Int = 0, onDone: () -> Unit) {
         val c = appColors
         val veil = remember { Animatable(0f) }
         val card = remember { Animatable(0f) }
+        // The card's opacity on its own, gentler curve: on the rise's it would be all there in a few frames.
+        val fade = remember { Animatable(0f) }
         LaunchedEffect(shown) {
             if (shown) {
-                launch { veil.animateTo(1f, tween(VEIL_MS, easing = Motion.standard)) }
-                card.animateTo(1f, tween(CARD_IN_MS, delayMillis = 60, easing = Motion.emphasizedDecelerate))
+                launch { veil.animateTo(1f, tween(VEIL_IN_MS, easing = Motion.standard)) }
+                launch { fade.animateTo(1f, tween(CARD_IN_MS, delayMillis = 100, easing = Motion.standard)) }
+                card.animateTo(1f, tween(CARD_IN_MS, delayMillis = 100, easing = Motion.emphasizedDecelerate))
             } else {
                 launch { card.animateTo(0f, tween(CARD_OUT_MS, delayMillis = 40, easing = Motion.emphasizedAccelerate)) }
                 veil.animateTo(0f, tween(VEIL_MS, delayMillis = 80, easing = Motion.standard))
@@ -119,7 +122,7 @@ fun UsageGuide(page: Int = 0, onDone: () -> Unit) {
                     .height(height)
                     .graphicsLayer {
                         val p = card.value
-                        alpha = if (shown) min(1f, 1.8f * p) else p
+                        alpha = if (shown) fade.value else p
                         translationY = (if (shown) 56.dp else 24.dp).toPx() * (1f - p)
                         scaleX = if (shown) 0.96f + 0.04f * p else 0.98f + 0.02f * p
                         scaleY = scaleX
@@ -641,7 +644,9 @@ private val FOOTER_HEIGHT = 84.dp
 private val TILE = 58.dp
 private val BAR_HEIGHTS = listOf(10f, 20f, 26f, 18f, 9f)
 private const val VEIL_MS = 240
-private const val CARD_IN_MS = 360
+// Material 3 durations: the veil medium4, the card long2, so the guide settles in rather than pops up.
+private const val VEIL_IN_MS = 400
+private const val CARD_IN_MS = 500
 private const val CARD_OUT_MS = 200
 private const val SETTLE_MS = 320
 private const val WELCOME_MS = 4000

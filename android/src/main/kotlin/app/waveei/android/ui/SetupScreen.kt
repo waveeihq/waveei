@@ -161,7 +161,8 @@ fun OnboardingScreen(activity: MainActivity, nav: Navigator, at: Int = 0) {
                 label = "setup",
             ) { screen ->
                 val place = screen / 2
-                val bottom = if (place == 0) (height * 0.17f).coerceIn(24.dp, 160.dp) else (height * 0.27f).coerceIn(96.dp, 238.dp)
+                // Under a later step only the room the on-screen Back needs, so a step that fits does not scroll.
+                val bottom = if (place == 0) (height * 0.17f).coerceIn(24.dp, 160.dp) else BACK_CLEARANCE
                 Column(
                     Modifier
                         .fillMaxSize()
@@ -178,7 +179,8 @@ fun OnboardingScreen(activity: MainActivity, nav: Navigator, at: Int = 0) {
                     ) {
                         when {
                             place == 0 -> StartStep(activity) { step = 1 }
-                            place == 1 -> MicStep(activity, state) { step = 2 }
+                            // The prompt's picture takes what the step leaves, so the step fits the screen.
+                            place == 1 -> MicStep(activity, state, (height - PROGRESS_HEIGHT - GUTTER - BACK_CLEARANCE - MIC_STEP_TEXT).coerceIn(MIC_PICTURE_MIN, MIC_PICTURE_MAX)) { step = 2 }
                             place == 2 -> KeyboardStep(activity, state.keyboard) { step = 3 }
                             place == 3 && screen % 2 == 1 -> ConsentStep(
                                 onAgree = {
@@ -345,7 +347,7 @@ private fun StartCard() {
 }
 
 @Composable
-private fun MicStep(activity: MainActivity, state: SetupState, onNext: () -> Unit) {
+private fun MicStep(activity: MainActivity, state: SetupState, picture: Dp, onNext: () -> Unit) {
     val granted = state.mic
     val blocked = state.micBlocked
     StepTile("microphone", granted)
@@ -354,7 +356,7 @@ private fun MicStep(activity: MainActivity, state: SetupState, onNext: () -> Uni
     if (blocked) InfoLine(stringResource(R.string.mic_blocked), glyph = "info", grey = true, modifier = Modifier.padding(top = 18.dp))
     // Android's prompt drawn ahead of it, with the answer that keeps the mic for good.
     if (!granted && !blocked) {
-        Box(Modifier.fillMaxWidth().padding(top = 24.dp).clearAndSetSemantics {}, contentAlignment = Alignment.Center) { MicPromptPicture() }
+        Box(Modifier.fillMaxWidth().padding(top = 24.dp).clearAndSetSemantics {}, contentAlignment = Alignment.Center) { MicPromptPicture(picture) }
         InfoLine(stringResource(R.string.mic_pick_while_using), glyph = "info", modifier = Modifier.padding(top = 18.dp))
     }
     Granted(granted, stringResource(R.string.microphone_on), onNext) {
@@ -709,6 +711,12 @@ private val STEP_SHIFT = 40.dp
 /** The setup's side margin, on the 8 dp grid. */
 private val GUTTER = 24.dp
 private val PROGRESS_HEIGHT = 14.dp
+/** Under a step: the on-screen Back (16 dp from the bottom, a 50 dp touch area) and a gap above it. */
+private val BACK_CLEARANCE = 80.dp
+/** The Microphone step without its picture, with room for a line more. */
+private val MIC_STEP_TEXT = 440.dp
+private val MIC_PICTURE_MIN = 180.dp
+private val MIC_PICTURE_MAX = 300.dp
 private const val STEP_MS = 300
 private const val PROGRESS_MS = 400
 private const val GRANT_MS = 300

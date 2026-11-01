@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -25,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -320,9 +322,16 @@ private fun BoxScope.AppBehind() {
 
 /** Android's microphone prompt, "While using the app" ringed; dark at night, as the phone shows it in its dark theme. */
 @Composable
-fun MicPromptPicture() = CompositionLocalProvider(LocalSys provides if (MaterialTheme.colorScheme.background.luminance() < 0.5f) SYS_DARK else SYS_LIGHT) {
-    MiniPhone(160.dp, 300.dp) { MicPrompt() }
+fun MicPromptPicture(height: Dp = MIC_PHONE_H) = CompositionLocalProvider(LocalSys provides if (MaterialTheme.colorScheme.background.luminance() < 0.5f) SYS_DARK else SYS_LIGHT) {
+    // On a shorter screen the whole picture scales down, its proportions kept.
+    val k = height / MIC_PHONE_H
+    Box(Modifier.size(MIC_PHONE_W * k, height), contentAlignment = Alignment.Center) {
+        Box(Modifier.requiredSize(MIC_PHONE_W, MIC_PHONE_H).graphicsLayer { scaleX = k; scaleY = k }) { MiniPhone(MIC_PHONE_W, MIC_PHONE_H) { MicPrompt() } }
+    }
 }
+
+private val MIC_PHONE_W = 160.dp
+private val MIC_PHONE_H = 300.dp
 
 @Composable
 private fun BoxScope.MicPrompt() {
