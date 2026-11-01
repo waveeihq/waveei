@@ -11,11 +11,11 @@ Cross-platform by design. Now on Android.
 </p>
 
 <p align="center">
-<a href="https://github.com/waveeihq/waveei/releases/latest"><b>Get Waveei for Android</b></a>
-&nbsp;&nbsp;·&nbsp;&nbsp;
-<a href="PRIVACY.md">Privacy</a>
-&nbsp;&nbsp;·&nbsp;&nbsp;
-<a href="#build">Build it yourself</a>
+<a href="https://github.com/waveeihq/waveei/releases/latest/download/waveei.apk"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/button-get-dark.png"><img src=".github/assets/button-get.png" height="48" width="228" alt="Get Waveei for Android"></picture></a>
+&nbsp;
+<a href="PRIVACY.md"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/button-privacy-dark.png"><img src=".github/assets/button-privacy.png" height="48" width="108" alt="Privacy"></picture></a>
+&nbsp;
+<a href="#build"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/button-build-dark.png"><img src=".github/assets/button-build.png" height="48" width="171" alt="Build it yourself"></picture></a>
 </p>
 
 <br>
