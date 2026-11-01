@@ -16,12 +16,14 @@
 <style>
   :root {
     --page: #F3F5F8; --card: #FFFFFF; --line: #E3E8EF; --ink: #15191F; --ink2: #5A6270; --ink3: #687180;
-    --acc: #0E70F4; --accInk: #0B5FD0; --soft: #EDF4FF; --fill: #0E70F4;
+    --acc: #0E70F4; --accInk: #0B5FD0; --soft: #EDF4FF; --fill: #0E70F4; --ring: #0E70F4;
+    --lift: 0 1px 2px rgba(16,32,64,.06), 0 12px 32px rgba(16,32,64,.08);
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --page: #0E1520; --card: #172131; --line: #222D3E; --ink: #E4EAF3; --ink2: #97A3B6; --ink3: #7D899C;
-      --acc: #6DB0FF; --accInk: #6DB0FF; --soft: #15263E; --fill: #1E6FE6;
+      --acc: #6DB0FF; --accInk: #6DB0FF; --soft: #15263E; --fill: #1E6FE6; --ring: #1E6FE6;
+      --lift: 0 12px 32px rgba(0,0,0,.35);
     }
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -36,38 +38,71 @@
   nav b { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
   nav .links { margin-left: auto; display: flex; gap: 20px; font-size: 15px; font-weight: 500; color: var(--ink2); }
   nav .links a { text-decoration: none; }
-  .hero { border-radius: 28px; overflow: hidden; margin-top: 8px; }
-  .lead { text-align: center; max-width: 620px; margin: 40px auto 0; font-size: 20px; color: var(--ink2); }
+  h1 { margin-top: 48px; font-size: 80px; line-height: 1; font-weight: 800; letter-spacing: -0.05em; }
+  h1 i { display: inline-block; width: 6px; height: .78em; margin-left: 8px; background: var(--acc); border-radius: 3px; vertical-align: -0.04em; }
+  .lead { max-width: 560px; margin-top: 24px; font-size: 20px; color: var(--ink2); }
   .lead b { color: var(--ink); font-weight: 650; }
-  .cta { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
   .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 12px 24px; border-radius: 999px; font-size: 16px; font-weight: 600; text-decoration: none; }
   .btn.fill { background: var(--fill); color: #fff; }
   .btn.ghost { background: var(--card); border: 1px solid var(--line); color: var(--ink); }
-  .note { text-align: center; margin-top: 12px; font-size: 14px; color: var(--ink3); }
-  section { margin-top: 72px; }
-  h2 { font-size: 36px; line-height: 1.1; font-weight: 800; letter-spacing: -0.035em; }
-  h2 span { color: inherit; }
-  .eyebrow { font-size: 12px; font-weight: 650; letter-spacing: .08em; color: var(--ink3); margin-bottom: 10px; }
-  .eyebrow b { color: var(--acc); font-weight: 650; }
-  .shot { margin-top: 24px; border-radius: 24px; overflow: hidden; border: 1px solid var(--line); }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 28px 40px; margin-top: 32px; }
-  .feat { max-width: 36ch; }
-  .feat h3 { font-size: 17px; font-weight: 650; }
-  .feat p { margin-top: 6px; font-size: 15px; color: var(--ink2); }
+  .note { margin-top: 12px; font-size: 14px; color: var(--ink3); }
+  .devices { margin-top: 40px; border-radius: 28px; overflow: hidden; }
+  section { margin-top: 96px; }
+  h2 { font-size: 40px; line-height: 1.1; font-weight: 800; letter-spacing: -0.04em; }
+  .sub { margin-top: 12px; font-size: 18px; color: var(--ink2); }
+  .shot { margin-top: 28px; border-radius: 24px; overflow: hidden; border: 1px solid var(--line); }
+  /* The keyboard screenshot's own corner radius, on all four corners. */
+  .kb { border-radius: 10.06% / 13.6%; overflow: hidden; border: 1px solid var(--line); }
+  .listen { display: grid; grid-template-columns: 1.2fr 1fr; gap: 48px; align-items: center; margin-top: 20px; background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 32px; }
+  .steps { list-style: none; display: grid; gap: 4px; }
+  .steps li { border-top: 1px solid var(--line); padding: 16px 0 14px; }
+  .steps li:first-child { border-top: 0; }
+  .steps h3, .feat h3 { font-size: 17px; font-weight: 650; }
+  .steps h3 span { color: var(--ink3); margin-right: 8px; }
+  .steps p, .feat p { margin-top: 6px; font-size: 15px; color: var(--ink2); }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 28px; }
+  .feat { background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 24px; }
+  .feat .ic { width: 44px; height: 44px; border-radius: 12px; background: var(--soft); color: var(--acc); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 28px; }
+  .plans { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 28px; }
+  .plan { position: relative; overflow: hidden; background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 28px 28px 24px; }
+  .plan.tide { border: 2px solid var(--ring); padding: 27px 27px 23px; box-shadow: var(--lift); }
+  .plan .name { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 650; color: var(--ink2); }
+  .plan.tide .name { color: var(--acc); }
+  .plan .price { margin-top: 14px; display: flex; align-items: baseline; gap: 6px; }
+  .plan .price b { font-size: 52px; line-height: 1; font-weight: 800; letter-spacing: -0.04em; }
+  .plan .price span { font-size: 16px; font-weight: 500; color: var(--ink2); }
+  .plan .s { margin-top: 8px; font-size: 15px; color: var(--ink2); }
+  .plan hr { border: 0; border-top: 1px solid var(--line); margin: 22px 0 18px; }
+  .plan ul { list-style: none; display: grid; gap: 14px; }
+  .plan li { display: flex; align-items: center; gap: 12px; font-size: 16px; font-weight: 500; }
+  .plan li svg { flex: none; color: var(--acc); }
+  .plan .foot { position: relative; z-index: 1; margin-top: 22px; font-size: 14px; color: var(--ink3); }
+  .plan .water { position: absolute; left: 0; bottom: 0; width: 100%; height: 64px; opacity: .14; }
   .promise { max-width: 72ch; display: flex; gap: 12px; align-items: flex-start; margin-top: 24px; background: var(--soft); border-radius: 18px; padding: 18px 20px; font-size: 16px; font-weight: 550; }
   .promise svg { flex: none; margin-top: 2px; }
   .promise a { color: var(--accInk); }
-  footer { margin: 80px 0 40px; display: flex; flex-wrap: wrap; gap: 20px; align-items: center; font-size: 14px; color: var(--ink3); }
+  footer { margin: 96px 0 40px; display: flex; flex-wrap: wrap; gap: 20px; align-items: center; font-size: 14px; color: var(--ink3); }
   footer a { text-decoration: none; }
   footer .sp { margin-left: auto; }
-  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .dark { display: none; }
-  @media (prefers-color-scheme: dark) { .light { display: none; } .dark { display: block; } }
+  @media (max-width: 760px) {
+    .listen, .two, .plans { grid-template-columns: 1fr; }
+    .grid { grid-template-columns: 1fr 1fr; }
+    .listen { gap: 8px; padding: 20px; }
+  }
   @media (max-width: 560px) {
     nav .links { gap: 14px; font-size: 14px; }
+    h1 { margin-top: 28px; font-size: 56px; }
     .lead { font-size: 17px; }
-    h2 { font-size: 28px; }
-    section { margin-top: 56px; }
+    .devices { margin-top: 32px; border-radius: 20px; }
+    h2 { font-size: 30px; }
+    .sub { font-size: 16px; }
+    section { margin-top: 64px; }
+    .grid { grid-template-columns: 1fr; gap: 12px; }
+    .feat { display: grid; grid-template-columns: 44px 1fr; column-gap: 16px; padding: 20px; }
+    .feat .ic { grid-row: span 2; margin-bottom: 0; }
+    .feat p { margin-top: 4px; }
     footer .sp { margin-left: 0; }
   }
 </style>
@@ -79,24 +114,21 @@
     <b>Waveei</b>
     <div class="links"><a href="#pricing">Pricing</a><a href="#privacy">Privacy</a><a href="https://github.com/waveeihq/waveei">Source</a></div>
   </nav>
-
-  <h1 class="sr">Talk. It types.</h1>
-  <div class="hero">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="assets/hero-dark.png">
-      <img src="assets/hero.png" alt="Waveei. Talk. It types. A laptop, a tablet and a phone, each with Waveei on it.">
-    </picture>
-  </div>
-
+  <h1>Talk.<br>It types.<i></i></h1>
   <p class="lead"><b>You talk faster than you type.</b> Waveei turns what you say into clean text, right where you are typing. Cross-platform by design. Now on Android.</p>
   <div class="cta">
     <a class="btn fill" href="https://github.com/waveeihq/waveei/releases/latest">Get Waveei for Android</a>
     <a class="btn ghost" href="#pricing">See pricing</a>
   </div>
   <p class="note">Android 13 or newer. 30 free minutes every week, no sign-up.</p>
-
+  <div class="devices">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="assets/devices-dark.png">
+      <img src="assets/devices.png" alt="A laptop, a tablet and a phone, each with Waveei on it.">
+    </picture>
+  </div>
   <section>
-    <h2>Say it messy, <span>get it clean.</span></h2>
+    <h2>Say it messy, get it clean.</h2>
     <div class="shot">
       <picture>
         <source media="(max-width: 560px) and (prefers-color-scheme: dark)" srcset="assets/demo-narrow-dark.png">
@@ -105,50 +137,61 @@
         <img src="assets/demo.png" alt="You say: so um tell Ana the table's booked, uh, for seven, no wait, for six, by the window. It types: Tell Ana the table's booked for six, by the window.">
       </picture>
     </div>
-    <div class="shot">
-      <picture>
-        <source media="(max-width: 560px) and (prefers-color-scheme: dark)" srcset="assets/keyboard-narrow-dark.png">
-        <source media="(max-width: 560px)" srcset="assets/keyboard-narrow.png">
-        <source media="(prefers-color-scheme: dark)" srcset="assets/keyboard-dark.png">
-        <img src="assets/keyboard.png" alt="The Waveei keyboard while it listens: a ring around the mic, the words appearing above it.">
-      </picture>
+    <div class="listen">
+      <div class="kb">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="assets/keyboard-night.png">
+          <img src="assets/keyboard-day.png" alt="The Waveei keyboard while it listens: a ring around the mic, the words appearing above it.">
+        </picture>
+      </div>
+      <ol class="steps">
+        <li><h3><span>01</span>Tap and talk</h3><p>A ring around the mic: it’s listening. Nothing is recorded before you tap.</p></li>
+        <li><h3><span>02</span>Watch it land</h3><p>Words show up as you speak. Pause any time, pick up where you left off.</p></li>
+        <li><h3><span>03</span>Style &amp; Translate</h3><p>Message or formal. English in, German out. One tap above the mic.</p></li>
+      </ol>
     </div>
   </section>
-
   <section>
-    <h2>One mic, <span>a few helpers.</span></h2>
+    <h2>One mic, a few helpers.</h2>
     <div class="grid">
-      <div class="feat"><h3>Over any app</h3><p>The record dot floats over every app and types into the field in front, whichever keyboard is open.</p></div>
-      <div class="feat"><h3>Sends it for you</h3><p>With Auto-send on, Waveei presses the app's Send button once the text is in.</p></div>
-      <div class="feat"><h3>Your tone</h3><p>Message keeps it casual, Formal polishes it.</p></div>
-      <div class="feat"><h3>Into another language</h3><p>Speak in yours, and the text comes in the language you pick under Translate.</p></div>
-      <div class="feat"><h3>Nothing lost</h3><p>A dictation that fails stays on the phone to try again, and History keeps the last few to insert again.</p></div>
-      <div class="feat"><h3>Your words</h3><p>Add names and jargon to your Vocabulary, and Waveei spells them your way.</p></div>
+      <div class="feat"><div class="ic"><svg width="22" height="22" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M188,48a27.75,27.75,0,0,0-12,2.71V44a28,28,0,0,0-54.65-8.6A28,28,0,0,0,80,60v64l-3.82-6.13a28,28,0,0,0-48.6,27.82c16,33.77,28.93,57.72,43.72,72.69C86.24,233.54,103.2,240,128,240a88.1,88.1,0,0,0,88-88V76A28,28,0,0,0,188,48Zm12,104a72.08,72.08,0,0,1-72,72c-20.38,0-33.51-4.88-45.33-16.85C69.44,193.74,57.26,171,41.9,138.58a6.36,6.36,0,0,0-.3-.58,12,12,0,0,1,20.79-12,1.76,1.76,0,0,0,.14.23l18.67,30A8,8,0,0,0,96,152V60a12,12,0,0,1,24,0v60a8,8,0,0,0,16,0V44a12,12,0,0,1,24,0v76a8,8,0,0,0,16,0V76a12,12,0,0,1,24,0Z"/></svg></div><h3>Over any app</h3><p>The record dot floats over every app and types into the field in front, whichever keyboard is open.</p></div>
+      <div class="feat"><div class="ic"><svg width="22" height="22" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M227.32,28.68a16,16,0,0,0-15.66-4.08l-.15,0L19.57,82.84a16,16,0,0,0-2.49,29.8L102,154l41.3,84.87A15.86,15.86,0,0,0,157.74,248q.69,0,1.38-.06a15.88,15.88,0,0,0,14-11.51l58.2-191.94c0-.05,0-.1,0-.15A16,16,0,0,0,227.32,28.68ZM157.83,231.85l-.05.14,0-.07-40.06-82.3,48-48a8,8,0,0,0-11.31-11.31l-48,48L24.08,98.25l-.07,0,.14,0L216,40Z"/></svg></div><h3>Sends it for you</h3><p>With Auto-send on, Waveei presses the app's Send button once the text is in.</p></div>
+      <div class="feat"><div class="ic"><svg width="22" height="22" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M197.58,129.06,146,110l-19-51.62a15.92,15.92,0,0,0-29.88,0L78,110l-51.62,19a15.92,15.92,0,0,0,0,29.88L78,178l19,51.62a15.92,15.92,0,0,0,29.88,0L146,178l51.62-19a15.92,15.92,0,0,0,0-29.88ZM137,164.22a8,8,0,0,0-4.74,4.74L112,223.85,91.78,169A8,8,0,0,0,87,164.22L32.15,144,87,123.78A8,8,0,0,0,91.78,119L112,64.15,132.22,119a8,8,0,0,0,4.74,4.74L191.85,144ZM144,40a8,8,0,0,1,8-8h16V16a8,8,0,0,1,16,0V32h16a8,8,0,0,1,0,16H184V64a8,8,0,0,1-16,0V48H152A8,8,0,0,1,144,40ZM248,88a8,8,0,0,1-8,8h-8v8a8,8,0,0,1-16,0V96h-8a8,8,0,0,1,0-16h8V72a8,8,0,0,1,16,0v8h8A8,8,0,0,1,248,88Z"/></svg></div><h3>Your tone</h3><p>Message keeps it casual, Formal polishes it.</p></div>
+      <div class="feat"><div class="ic"><svg width="22" height="22" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M247.15,212.42l-56-112a8,8,0,0,0-14.31,0l-21.71,43.43A88,88,0,0,1,108,126.93,103.65,103.65,0,0,0,135.69,64H160a8,8,0,0,0,0-16H104V32a8,8,0,0,0-16,0V48H32a8,8,0,0,0,0,16h87.63A87.76,87.76,0,0,1,96,116.35a87.74,87.74,0,0,1-19-31,8,8,0,1,0-15.08,5.34A103.63,103.63,0,0,0,84,127a87.55,87.55,0,0,1-52,17,8,8,0,0,0,0,16,103.46,103.46,0,0,0,64-22.08,104.18,104.18,0,0,0,51.44,21.31l-26.6,53.19a8,8,0,0,0,14.31,7.16L148.94,192h70.11l13.79,27.58A8,8,0,0,0,240,224a8,8,0,0,0,7.15-11.58ZM156.94,176,184,121.89,211.05,176Z"/></svg></div><h3>Into another language</h3><p>Speak in yours, and the text comes in the language you pick under Translate.</p></div>
+      <div class="feat"><div class="ic"><svg width="22" height="22" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M136,80v43.47l36.12,21.67a8,8,0,0,1-8.24,13.72l-40-24A8,8,0,0,1,120,128V80a8,8,0,0,1,16,0Zm-8-48A95.44,95.44,0,0,0,60.08,60.15C52.81,67.51,46.35,74.59,40,82V64a8,8,0,0,0-16,0v40a8,8,0,0,0,8,8H72a8,8,0,0,0,0-16H49c7.15-8.42,14.27-16.35,22.39-24.57a80,80,0,1,1,1.66,114.75,8,8,0,1,0-11,11.64A96,96,0,1,0,128,32Z"/></svg></div><h3>Nothing lost</h3><p>A dictation that fails stays on the phone to try again, and History keeps the last few to insert again.</p></div>
+      <div class="feat"><div class="ic"><svg width="22" height="22" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232,48H160a40,40,0,0,0-32,16A40,40,0,0,0,96,48H24a8,8,0,0,0-8,8V200a8,8,0,0,0,8,8H96a24,24,0,0,1,24,24,8,8,0,0,0,16,0,24,24,0,0,1,24-24h72a8,8,0,0,0,8-8V56A8,8,0,0,0,232,48ZM96,192H32V64H96a24,24,0,0,1,24,24V200A39.81,39.81,0,0,0,96,192Zm128,0H160a39.81,39.81,0,0,0-24,8V88a24,24,0,0,1,24-24h64ZM160,88h40a8,8,0,0,1,0,16H160a8,8,0,0,1,0-16Zm48,40a8,8,0,0,1-8,8H160a8,8,0,0,1,0-16h40A8,8,0,0,1,208,128Zm0,32a8,8,0,0,1-8,8H160a8,8,0,0,1,0-16h40A8,8,0,0,1,208,160Z"/></svg></div><h3>Your words</h3><p>Add names and jargon to your Vocabulary, and Waveei spells them your way.</p></div>
     </div>
   </section>
-
   <section>
-    <div class="shot">
-      <picture>
-        <source media="(max-width: 560px) and (prefers-color-scheme: dark)" srcset="assets/themes-narrow-dark.png">
-        <source media="(max-width: 560px)" srcset="assets/themes-narrow.png">
-        <source media="(prefers-color-scheme: dark)" srcset="assets/themes-dark.png">
-        <img src="assets/themes.png" alt="Day or night, it fits right in. The Waveei keyboard in light and in dark: light, dark or match the phone, in Settings.">
-      </picture>
+    <h2>Day or night. It fits right in.</h2>
+    <p class="sub">Light, dark or match the phone, in Settings.</p>
+    <div class="two">
+      <div class="kb"><img src="assets/keyboard-day.png" alt="The Waveei keyboard in light."></div>
+      <div class="kb"><img src="assets/keyboard-night.png" alt="The Waveei keyboard in dark."></div>
     </div>
   </section>
-
   <section id="pricing">
-    <div class="shot">
-      <picture>
-        <source media="(max-width: 560px) and (prefers-color-scheme: dark)" srcset="assets/pricing-narrow-dark.png">
-        <source media="(max-width: 560px)" srcset="assets/pricing-narrow.png">
-        <source media="(prefers-color-scheme: dark)" srcset="assets/pricing-dark.png">
-        <img src="assets/pricing.png" alt="Start free. Talk without limits. Free, $0: 30 minutes every week, no sign-up, no card, Style and Translate, floating dots and History. Waveei Tide, $6 a month: everything in Free, plus no weekly limit, live words as you talk, and your settings and words on all your phones. Cancel any time; tax where it applies.">
-      </picture>
+    <h2>Start free. Talk without limits.</h2>
+    <div class="plans">
+      <div class="plan">
+        <div class="name">Free</div>
+        <div class="price"><b>$0</b></div>
+        <div class="s">30 minutes every week</div>
+        <hr>
+        <ul><li><svg width="20" height="20" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"/></svg>No sign-up, no card</li><li><svg width="20" height="20" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M247.15,212.42l-56-112a8,8,0,0,0-14.31,0l-21.71,43.43A88,88,0,0,1,108,126.93,103.65,103.65,0,0,0,135.69,64H160a8,8,0,0,0,0-16H104V32a8,8,0,0,0-16,0V48H32a8,8,0,0,0,0,16h87.63A87.76,87.76,0,0,1,96,116.35a87.74,87.74,0,0,1-19-31,8,8,0,1,0-15.08,5.34A103.63,103.63,0,0,0,84,127a87.55,87.55,0,0,1-52,17,8,8,0,0,0,0,16,103.46,103.46,0,0,0,64-22.08,104.18,104.18,0,0,0,51.44,21.31l-26.6,53.19a8,8,0,0,0,14.31,7.16L148.94,192h70.11l13.79,27.58A8,8,0,0,0,240,224a8,8,0,0,0,7.15-11.58ZM156.94,176,184,121.89,211.05,176Z"/></svg>Style &amp; Translate</li><li><svg width="20" height="20" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M188,48a27.75,27.75,0,0,0-12,2.71V44a28,28,0,0,0-54.65-8.6A28,28,0,0,0,80,60v64l-3.82-6.13a28,28,0,0,0-48.6,27.82c16,33.77,28.93,57.72,43.72,72.69C86.24,233.54,103.2,240,128,240a88.1,88.1,0,0,0,88-88V76A28,28,0,0,0,188,48Zm12,104a72.08,72.08,0,0,1-72,72c-20.38,0-33.51-4.88-45.33-16.85C69.44,193.74,57.26,171,41.9,138.58a6.36,6.36,0,0,0-.3-.58,12,12,0,0,1,20.79-12,1.76,1.76,0,0,0,.14.23l18.67,30A8,8,0,0,0,96,152V60a12,12,0,0,1,24,0v60a8,8,0,0,0,16,0V44a12,12,0,0,1,24,0v76a8,8,0,0,0,16,0V76a12,12,0,0,1,24,0Z"/></svg>Floating dots and History</li></ul>
+        <div class="foot">Every week the minutes start again.</div>
+      </div>
+      <div class="plan tide">
+        <div class="name"><svg width="18" height="18" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M80,24H176A56,56,0,0,1,232,80V176A56,56,0,0,1,176,232H80A56,56,0,0,1,24,176V80A56,56,0,0,1,80,24ZM80,40A40,40,0,0,0,40,80V176A40,40,0,0,0,80,216H176A40,40,0,0,0,216,176V80A40,40,0,0,0,176,40ZM48,114.91L49.67,114.29L51.33,113.69L53,113.11L54.67,112.55L56.33,112.02L58,111.51L59.67,111.02L61.33,110.57L63,110.15L64.67,109.76L66.33,109.41L68,109.09L69.67,108.81L71.33,108.57L73,108.38L74.67,108.22L76.33,108.1L78,108.03L79.67,108L81.33,108.01L83,108.07L84.67,108.17L86.33,108.31L88,108.49L89.67,108.71L91.33,108.97L93,109.28L94.67,109.61L96.33,109.99L98,110.4L99.67,110.84L101.33,111.31L103,111.81L104.67,112.34L106.33,112.89L108,113.46L109.67,114.05L111.33,114.66L113,115.29L114.67,115.92L116.33,116.57L118,117.22L119.67,117.87L121.33,118.52L123,119.18L124.67,119.82L126.33,120.46L128,121.09L129.67,121.71L131.33,122.31L133,122.89L134.67,123.45L136.33,123.98L138,124.49L139.67,124.98L141.33,125.43L143,125.85L144.67,126.24L146.33,126.59L148,126.91L149.67,127.19L151.33,127.43L153,127.62L154.67,127.78L156.33,127.9L158,127.97L159.67,128L161.33,127.99L163,127.93L164.67,127.83L166.33,127.69L168,127.51L169.67,127.29L171.33,127.03L173,126.72L174.67,126.39L176.33,126.01L178,125.6L179.67,125.16L181.33,124.69L183,124.19L184.67,123.66L186.33,123.11L188,122.54L189.67,121.95L191.33,121.34L193,120.71L194.67,120.08L196.33,119.43L198,118.78L199.67,118.13L201.33,117.48L203,116.82L204.67,116.18L206.33,115.54L208,114.91L208,145.71L206.33,144.95L204.67,144.19L203,143.41L201.33,142.63L199.67,141.84L198,141.06L196.33,140.28L194.67,139.51L193,138.74L191.33,137.99L189.67,137.26L188,136.55L186.33,135.86L184.67,135.2L183,134.57L181.33,133.97L179.67,133.4L178,132.88L176.33,132.38L174.67,131.94L173,131.53L171.33,131.17L169.67,130.85L168,130.59L166.33,130.37L164.67,130.2L163,130.08L161.33,130.02L159.67,130L158,130.04L156.33,130.12L154.67,130.26L153,130.45L151.33,130.69L149.67,130.97L148,131.31L146.33,131.69L144.67,132.11L143,132.58L141.33,133.08L139.67,133.63L138,134.21L136.33,134.82L134.67,135.46L133,136.14L131.33,136.83L129.67,137.55L128,138.29L126.33,139.05L124.67,139.81L123,140.59L121.33,141.37L119.67,142.16L118,142.94L116.33,143.72L114.67,144.49L113,145.26L111.33,146.01L109.67,146.74L108,147.45L106.33,148.14L104.67,148.8L103,149.43L101.33,150.03L99.67,150.6L98,151.12L96.33,151.62L94.67,152.06L93,152.47L91.33,152.83L89.67,153.15L88,153.41L86.33,153.63L84.67,153.8L83,153.92L81.33,153.98L79.67,154L78,153.96L76.33,153.88L74.67,153.74L73,153.55L71.33,153.31L69.67,153.03L68,152.69L66.33,152.31L64.67,151.89L63,151.42L61.33,150.92L59.67,150.37L58,149.79L56.33,149.18L54.67,148.54L53,147.86L51.33,147.17L49.67,146.45L48,145.71ZM48,159.71L49.67,160.45L51.33,161.17L53,161.86L54.67,162.54L56.33,163.18L58,163.79L59.67,164.37L61.33,164.92L63,165.42L64.67,165.89L66.33,166.31L68,166.69L69.67,167.03L71.33,167.31L73,167.55L74.67,167.74L76.33,167.88L78,167.96L79.67,168L81.33,167.98L83,167.92L84.67,167.8L86.33,167.63L88,167.41L89.67,167.15L91.33,166.83L93,166.47L94.67,166.06L96.33,165.62L98,165.12L99.67,164.6L101.33,164.03L103,163.43L104.67,162.8L106.33,162.14L108,161.45L109.67,160.74L111.33,160.01L113,159.26L114.67,158.49L116.33,157.72L118,156.94L119.67,156.16L121.33,155.37L123,154.59L124.67,153.81L126.33,153.05L128,152.29L129.67,151.55L131.33,150.83L133,150.14L134.67,149.46L136.33,148.82L138,148.21L139.67,147.63L141.33,147.08L143,146.58L144.67,146.11L146.33,145.69L148,145.31L149.67,144.97L151.33,144.69L153,144.45L154.67,144.26L156.33,144.12L158,144.04L159.67,144L161.33,144.02L163,144.08L164.67,144.2L166.33,144.37L168,144.59L169.67,144.85L171.33,145.17L173,145.53L174.67,145.94L176.33,146.38L178,146.88L179.67,147.4L181.33,147.97L183,148.57L184.67,149.2L186.33,149.86L188,150.55L189.67,151.26L191.33,151.99L193,152.74L194.67,153.51L196.33,154.28L198,155.06L199.67,155.84L201.33,156.63L203,157.41L204.67,158.19L206.33,158.95L208,159.71L208,176L206.33,186.19L204.67,190.22L203,193.18L201.33,195.55L199.67,197.54L198,199.24L196.33,200.71L194.67,201.99L193,203.11L191.33,204.09L189.67,204.93L188,205.66L186.33,206.29L184.67,206.8L183,207.22L181.33,207.55L179.67,207.79L178,207.94L176.33,208L174.67,208L173,208L171.33,208L169.67,208L168,208L166.33,208L164.67,208L163,208L161.33,208L159.67,208L158,208L156.33,208L154.67,208L153,208L151.33,208L149.67,208L148,208L146.33,208L144.67,208L143,208L141.33,208L139.67,208L138,208L136.33,208L134.67,208L133,208L131.33,208L129.67,208L128,208L126.33,208L124.67,208L123,208L121.33,208L119.67,208L118,208L116.33,208L114.67,208L113,208L111.33,208L109.67,208L108,208L106.33,208L104.67,208L103,208L101.33,208L99.67,208L98,208L96.33,208L94.67,208L93,208L91.33,208L89.67,208L88,208L86.33,208L84.67,208L83,208L81.33,208L79.67,208L78,207.94L76.33,207.79L74.67,207.55L73,207.22L71.33,206.8L69.67,206.29L68,205.66L66.33,204.93L64.67,204.09L63,203.11L61.33,201.99L59.67,200.71L58,199.24L56.33,197.54L54.67,195.55L53,193.18L51.33,190.22L49.67,186.19L48,176Z"/></svg>Waveei Tide</div>
+        <div class="price"><b>$6</b><span>/ month</span></div>
+        <div class="s">Everything in Free, and:</div>
+        <hr>
+        <ul><li><svg width="20" height="20" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M128,176a48.05,48.05,0,0,0,48-48V64a48,48,0,0,0-96,0v64A48.05,48.05,0,0,0,128,176ZM96,64a32,32,0,0,1,64,0v64a32,32,0,0,1-64,0Zm40,143.6V240a8,8,0,0,1-16,0V207.6A80.11,80.11,0,0,1,48,128a8,8,0,0,1,16,0,64,64,0,0,0,128,0,8,8,0,0,1,16,0A80.11,80.11,0,0,1,136,207.6Z"/></svg>No weekly limit</li><li><svg width="20" height="20" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M56,96v64a8,8,0,0,1-16,0V96a8,8,0,0,1,16,0ZM88,24a8,8,0,0,0-8,8V224a8,8,0,0,0,16,0V32A8,8,0,0,0,88,24Zm40,32a8,8,0,0,0-8,8V192a8,8,0,0,0,16,0V64A8,8,0,0,0,128,56Zm40,32a8,8,0,0,0-8,8v64a8,8,0,0,0,16,0V96A8,8,0,0,0,168,88Zm40-16a8,8,0,0,0-8,8v96a8,8,0,0,0,16,0V80A8,8,0,0,0,208,72Z"/></svg>Live words as you talk</li><li><svg width="20" height="20" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M176,16H80A24,24,0,0,0,56,40V216a24,24,0,0,0,24,24h96a24,24,0,0,0,24-24V40A24,24,0,0,0,176,16ZM72,64H184V192H72Zm8-32h96a8,8,0,0,1,8,8v8H72V40A8,8,0,0,1,80,32Zm96,192H80a8,8,0,0,1-8-8v-8H184v8A8,8,0,0,1,176,224Z"/></svg>Settings and words on all your phones</li></ul>
+        <div class="foot">Cancel any time. Tax where it applies.</div>
+        <svg class="water" viewBox="0 0 400 64" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5CB4FC"/><stop offset="1" stop-color="#2A7DE8"/></linearGradient></defs><path d="M0,26 C60,10 110,40 170,26 C230,12 280,38 340,24 C370,17 390,20 400,24 L400,64 L0,64 Z" fill="url(#w)"/></svg>
+      </div>
     </div>
   </section>
-
   <section id="privacy">
     <h2>What you say <span>stays yours.</span></h2>
     <div class="promise">
@@ -156,7 +199,6 @@
       <div>Zero data retention on our side: your audio and dictated text are never stored, and none of it trains a model. Nothing is recorded before you tap the mic, and nothing from password fields. <a href="https://github.com/waveeihq/waveei/blob/main/PRIVACY.md">The full privacy policy</a></div>
     </div>
   </section>
-
   <footer>
     <img src="assets/mark.png" alt="" width="24" height="24" style="width:24px">
     <span>Waveei</span>
