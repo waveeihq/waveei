@@ -1237,6 +1237,7 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         val preview = offer?.image?.let { ClipboardHistory.image(it)?.thumbnail }
         keyboard.model = KeyboardView.Model(
             state = state,
+            starting = Dictation.state == Dictation.State.RECORDING && !Dictation.listeningShown,
             status = status,
             statusKind = kind,
             liveWords = if (state == Dictation.State.RECORDING) Dictation.liveWords else "",

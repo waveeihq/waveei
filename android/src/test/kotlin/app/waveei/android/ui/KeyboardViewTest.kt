@@ -142,6 +142,15 @@ class KeyboardViewTest {
     }
 
     @Test
+    fun pauseAndCancelActFromTheMicsTouchBeforeListening() {
+        val view = keyboard()
+        view.model = view.model.copy(starting = true)
+        view.tap(KeyboardView.Key.PAUSE)
+        view.tap(KeyboardView.Key.CANCEL)
+        assertEquals(listOf("pause", "cancel"), calls)
+    }
+
+    @Test
     fun enterIsInTheMicRow() {
         for (left in listOf(false, true)) {
             val view = keyboard(leftHanded = left)

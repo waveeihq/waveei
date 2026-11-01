@@ -139,6 +139,8 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
 
     data class Model(
         val state: Dictation.State = Dictation.State.IDLE,
+        /** Recording, but not shown as Listening until the mic's first sound: the ring, Pause and × are there already. */
+        val starting: Boolean = false,
         val status: String = "",
         val statusKind: StatusKind = StatusKind.HINT,
         /** The words heard so far while recording, shown in place of the status when there are any. */
@@ -470,7 +472,8 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
     /** The mic's touch-down, once its ring and live keys are on screen; a start that fails takes them back at once. */
     private fun startMic() {
         actions.onMicDown()
-        if (model.state == Dictation.State.IDLE) {
+        // It did not start: all back as it was.
+        if (model.state == Dictation.State.IDLE && !model.starting) {
             recMark.jump(0f)
             pauseLive.jump(0f)
             cancelLive.jump(if (cancels(model)) 1f else 0f)
@@ -490,8 +493,8 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         if (new.state == Dictation.State.RECORDING && old.state != Dictation.State.RECORDING) voice.reset()
         // The recording mark: there and gone at once, as on the dot; it stays through processing, where it turns into
         // the busy arc.
-        val marked = new.state == Dictation.State.RECORDING || new.state == Dictation.State.PROCESSING
-        val wasMarked = old.state == Dictation.State.RECORDING || old.state == Dictation.State.PROCESSING
+        val marked = new.starting || new.state == Dictation.State.RECORDING || new.state == Dictation.State.PROCESSING
+        val wasMarked = old.starting || old.state == Dictation.State.RECORDING || old.state == Dictation.State.PROCESSING
         if (marked != wasMarked) recMark.jump(if (marked) 1f else 0f)
         // The trio changes at once: Pause ↔ Play, Retry, the ring into the busy arc.
         playing.jump(if (new.state == Dictation.State.PAUSED) 1f else 0f)
@@ -501,7 +504,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         if (retry && !showsRetry(old)) retryAt = now()
         retryShown.jump(if (retry) 1f else 0f)
         // Pause and × turn live and back at once, with the recording.
-        pauseLive.jump(if (new.state.open) 1f else 0f)
+        pauseLive.jump(if (pauses(new)) 1f else 0f)
         cancelLive.jump(if (cancels(new)) 1f else 0f)
         styleOpen.to(if (new.open == Key.STYLE) 1f else 0f, if (new.open == Key.STYLE) OPEN_MS else CLOSE_MS)
         translateOpen.to(if (new.open == Key.TRANSLATE) 1f else 0f, if (new.open == Key.TRANSLATE) OPEN_MS else CLOSE_MS)
@@ -2052,7 +2055,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
             }
             Key.BACKSPACE -> Unit
             Key.SETTINGS -> actions.onSettings()
-            Key.PAUSE -> if (model.state.open) actions.onPause()
+            Key.PAUSE -> if (pauses(model)) actions.onPause()
             Key.RETRY -> if (model.canRetry) actions.onRetry()
             // The touch that started the recording does not stop it when the finger lifts.
             Key.MIC -> if (!startedOnDown) actions.onMicTap()
@@ -2075,7 +2078,9 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
     private fun showsRetry(m: Model) = m.canRetry && m.state == Dictation.State.IDLE
 
     /** × acts on a dictation going on, and on the recording Retry offers, which it lets go. */
-    private fun cancels(m: Model) = m.state != Dictation.State.IDLE || showsRetry(m)
+    private fun cancels(m: Model) = m.state != Dictation.State.IDLE || m.starting || showsRetry(m)
+
+    private fun pauses(m: Model) = m.state.open || m.starting
 
     /** The paste offer takes the top row where Insert here and Continue do not show, and no panel or card is open. */
     private fun pasteShown(m: Model) = m.paste != null && !m.insertHere && m.continueKept == null && m.open == null
