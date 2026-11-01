@@ -118,3 +118,18 @@ jobs:
           cp "$(find apk -name 'android-release.apk' | head -1)" waveei.apk
           gh release create "build-$VERSION_CODE" waveei.apk \
             --title "$VERSION_NAME" --generate-notes --target "$GITHUB_SHA" --latest
+
+  # Each published build starts the developer build of the same commit in the private dev repository. DEV_TOKEN may
+  # only start that repository's workflows; without it nothing starts.
+  dev:
+    needs: [build, publish]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Start the developer build
+        env:
+          GH_TOKEN: ${{ secrets.DEV_TOKEN }}
+          VERSION_NAME: ${{ needs.build.outputs.name }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then echo "DEV_TOKEN is not set: no developer build"; exit 0; fi
+          gh workflow run ci.yml --repo waveeihq/waveei_dev --ref main -f sha="$GITHUB_SHA" -f name="$VERSION_NAME"
