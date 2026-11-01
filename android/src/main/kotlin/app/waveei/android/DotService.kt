@@ -920,23 +920,13 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
         } else if (tries > 1) {
             main.postDelayed({ trySend(app, text, tries - 1) }, SEND_RETRY_MS)
         } else {
-            // The labelled buttons nearest the field, for the report: an app that renames its send button shows here.
-            val labels = nearLabels(field)
-            DebugLog.add("dot: no send button in ${DebugLog.name(app, "an app")}, not sent; near: ${DebugLog.name(labels, "buttons")}")
-            Trace.current?.text("buttons", labels.toString())
+            DebugLog.add("dot: no send button in ${DebugLog.name(app, "an app")}, not sent")
+            Trace.current?.let { trace ->
+                val labels = appRoots(app).flatMap { nodes(it) }.filter { it.isClickable && it.isVisibleToUser }
+                    .mapNotNull { it.contentDescription?.toString() }.distinct().take(SEND_LOG_LABELS).toList()
+                trace.text("buttons", labels.toString())
+            }
         }
-    }
-
-    /** The labels of the visible buttons nearest [field] (as [sendButton] finds them), with "off" for a disabled one. */
-    private fun nearLabels(field: AccessibilityNodeInfo): List<String> {
-        val root = field.window?.root ?: generateSequence(field) { it.parent }.last()
-        val at = android.graphics.Rect().also(field::getBoundsInScreen)
-        return nodes(root)
-            .filter { it.isVisibleToUser && !it.isEditable && !it.contentDescription.isNullOrBlank() }
-            .mapNotNull { node -> generateSequence(node) { it.parent }.take(SEND_PARENTS).firstOrNull { it.isClickable }?.let { node to it } }
-            .sortedBy { (_, button) -> gap(at, android.graphics.Rect().also(button::getBoundsInScreen)) }
-            .map { (node, button) -> node.contentDescription.toString() + if (button.isEnabled) "" else " (off)" }
-            .distinct().take(SEND_LOG_LABELS).toList()
     }
 
     private fun rememberField() {
@@ -1270,7 +1260,7 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
         private const val SEND_TRIES = 6
         private const val SEND_RETRY_MS = 150L
         private const val SEND_PARENTS = 4
-        private const val SEND_LOG_LABELS = 6
+        private const val SEND_LOG_LABELS = 12
         private const val BUBBLE_MS = 2_500L
 
         /** How long the bubble takes to fade out, as DotView's own. */
