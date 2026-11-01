@@ -468,7 +468,15 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
                 main.removeCallbacks(rest)
             } else {
                 if (!view.shown) {
-                    wake()
+                    if (icon == Icon.SWITCH && !switching) {
+                        // Up with a keyboard the person called up some other way: at rest at once, see-through, as
+                        // it would be 3 s later; only its own switch shows it awake.
+                        resting = true
+                        main.removeCallbacks(rest)
+                        view.opacity = 1f - prefs.dotTransparency / 100f
+                    } else {
+                        wake()
+                    }
                     // Up for a dictation going on (the keyboard folded while recording): open, as if tapped.
                     if (!tucked && mode in BUSY) open = true
                     view.appear()
