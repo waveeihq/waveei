@@ -530,8 +530,8 @@ class MainActivity : ComponentActivity() {
         const val RESTRICTED_SETTINGS_OP = "android:access_restricted_settings"
 
         /** The launch screen's exit (Material 3 emphasized accelerate): the mark goes in 200 ms, then the page in 150. */
-        const val SPLASH_ICON_EXIT_MS = 320L
-        const val SPLASH_PAGE_FADE_MS = 260L
+        const val SPLASH_ICON_EXIT_MS = 220L
+        const val SPLASH_PAGE_FADE_MS = 180L
         const val SPLASH_MARK_WAIT_MAX_MS = 1_000L
         const val SPLASH_EXIT_SCALE = 1.06f
 

@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The light back wave rises into place from near the tile's bottom (32 of the icon's 108, here 22 of the splash
-     viewport), drifting in from the left, over 650 ms. -->
+     viewport), drifting in from the left, over 335 ms. -->
 <set xmlns:android="http://schemas.android.com/apk/res/android">
     <objectAnimator
-        android:duration="650"
+        android:duration="335"
         android:interpolator="@interpolator/splash_ease_out"
         android:propertyName="translateY"
         android:valueFrom="22"
         android:valueTo="0"
         android:valueType="floatType" />
     <objectAnimator
-        android:duration="650"
+        android:duration="335"
         android:interpolator="@interpolator/splash_ease_out"
         android:propertyName="translateX"
         android:valueFrom="-4.13"
