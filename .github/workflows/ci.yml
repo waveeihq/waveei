@@ -1,7 +1,11 @@
 name: CI
 
 on:
-  # Started by hand: Actions → CI → Run workflow.
+  # Every push to main builds, tests and publishes; a push of only the docs, the site or the README's pictures does not.
+  push:
+    branches: [main]
+    paths-ignore: ['**.md', 'docs/**', '.github/assets/**']
+  # Or by hand: Actions → CI → Run workflow.
   workflow_dispatch:
 
 permissions:
@@ -14,6 +18,8 @@ concurrency:
 # Actions are pinned to the commit their tag names: a tag can be moved to other code, a commit cannot.
 jobs:
   build:
+    # Only the public repo builds: a copy of it (the private preview) never does.
+    if: github.repository == 'waveeihq/waveei'
     runs-on: ubuntu-latest
     timeout-minutes: 40
     outputs:
