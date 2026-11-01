@@ -11,6 +11,7 @@ import android.animation.PropertyValuesHolder
 import android.animation.ValueAnimator
 import android.content.ComponentName
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInstaller
 import android.content.pm.PackageManager
 import android.content.res.Resources
@@ -28,6 +29,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -364,17 +366,41 @@ class MainActivity : ComponentActivity() {
 
     /**
      * Whether Android keeps Waveei's Accessibility switch restricted (Android 13+, an app from outside a store, until App
-     * info allows restricted settings); null where that cannot be read. Installed from a file or a browser, anything
-     * but allowed counts: newer Android leaves the setting at its default there and decides by the install's source.
+     * info allows restricted settings); null where that cannot be read. Anything but allowed counts when Waveei came
+     * from a file or a browser, or (Android 15+) was put in by an app that is not part of the phone, as a messenger or
+     * a file manager: newer Android leaves the setting at its default and decides by the install's source, trusting
+     * only installers the phone ships with or names (AOSP EnhancedConfirmationService.isPackageEcmGuarded). Wrongly
+     * "restricted" costs a guide whose first stop already finds the switch working; wrongly "not" leaves a greyed switch
+     * unexplained.
      */
     fun restrictedSettings(): Boolean? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return false
         return runCatching {
-            val mode = getSystemService(AppOpsManager::class.java).unsafeCheckOpNoThrow(RESTRICTED_SETTINGS_OP, Process.myUid(), packageName)
-            val source = packageManager.getInstallSourceInfo(packageName).packageSource
-            val fromFile = source == PackageInstaller.PACKAGE_SOURCE_LOCAL_FILE || source == PackageInstaller.PACKAGE_SOURCE_DOWNLOADED_FILE
-            mode == AppOpsManager.MODE_ERRORED || fromFile && mode != AppOpsManager.MODE_ALLOWED
+            val read = restrictedReading()
+            val fromFile = read.source == PackageInstaller.PACKAGE_SOURCE_LOCAL_FILE || read.source == PackageInstaller.PACKAGE_SOURCE_DOWNLOADED_FILE
+            val fromApp = Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM && !read.systemInstaller
+            read.mode == AppOpsManager.MODE_ERRORED || (fromFile || fromApp) && read.mode != AppOpsManager.MODE_ALLOWED
         }.getOrNull()
+    }
+
+    /** What [restrictedSettings] reads, for the event log: the setting's mode, the install's source and its installer. */
+    fun restrictedReason(): String =
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) "before Android 13"
+        else runCatching {
+            val read = restrictedReading()
+            "mode ${read.mode}, source ${read.source}, installer ${DebugLog.name(read.installer, if (read.systemInstaller) "a system app" else "an app")}"
+        }.getOrElse { "unread: ${it.javaClass.simpleName}" }
+
+    private class RestrictedReading(val mode: Int, val source: Int, val installer: String?, val systemInstaller: Boolean)
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun restrictedReading(): RestrictedReading {
+        val mode = getSystemService(AppOpsManager::class.java).unsafeCheckOpNoThrow(RESTRICTED_SETTINGS_OP, Process.myUid(), packageName)
+        val info = packageManager.getInstallSourceInfo(packageName)
+        val installer = info.installingPackageName
+        // The app that installed Waveei is always visible to it; one the phone ships with is trusted.
+        val system = installer != null && runCatching { packageManager.getApplicationInfo(installer, PackageManager.ApplicationInfoFlags.of(0)).flags and ApplicationInfo.FLAG_SYSTEM != 0 }.getOrDefault(false)
+        return RestrictedReading(mode, info.packageSource, installer, system)
     }
 
     fun openAppSettings() = startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))

@@ -106,10 +106,10 @@ private data class SetupState(
     val waiting: Boolean,
 )
 
-/** Turns every dot on; with the Accessibility service off this opens its settings, once. */
-private fun enableFloating(activity: MainActivity) {
+/** Turns every dot on; with the Accessibility service off and [open], this opens its settings, once. */
+private fun enableFloating(activity: MainActivity, open: Boolean = true) {
     MainActivity.Floating.entries.forEach { activity.setFloating(it, true, openSettings = false) }
-    if (!activity.dotServiceOn()) activity.openAccessibilitySettings()
+    if (open && !activity.dotServiceOn()) activity.openAccessibilitySettings()
 }
 
 /**
@@ -185,9 +185,9 @@ fun OnboardingScreen(activity: MainActivity, nav: Navigator, at: Int = 0) {
                             place == 3 && screen % 2 == 1 -> ConsentStep(
                                 onAgree = {
                                     consent = false
-                                    // Restricted, Accessibility opens on Waveei greyed out: the first of the three stops.
-                                    if (state.restricted) prefs.restrictedSeen = true
-                                    enableFloating(activity)
+                                    // Restricted, back to the guide, whose own button opens Accessibility: opened
+                                    // here, the guide would only flash on the way out.
+                                    enableFloating(activity, open = !state.restricted)
                                 },
                                 onNo = { consent = false },
                             )
@@ -385,6 +385,8 @@ private fun DotsStep(activity: MainActivity, state: SetupState, onTurnOn: () -> 
     // [granted] is the service on its own: Android turns it on only by hand, and without it nothing floats.
     val granted = state.dots
     val prefs = activity.prefs
+    // Why the guide shows or not, in the event log: Android's answer is read, not seen.
+    LaunchedEffect(state.restricted) { DebugLog.add("setup: dots restricted ${state.restricted}, ${activity.restrictedReason()}") }
     StepTile("hand", granted)
     StepTitle(stringResource(R.string.floating_icons))
     // An app from outside a store finds its switch greyed out on Android 13+: three stops, drawn, each a tap away.
