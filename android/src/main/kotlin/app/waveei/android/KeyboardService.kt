@@ -194,11 +194,27 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         return root
     }
 
+    /**
+     * An app bound to the keyboard just now: our keyboard switched in (from the dot or the switch key) or another app
+     * came up. Its first input is that field as it was, not a move to another one.
+     */
+    private var bound = false
+
+    override fun onBindInput() {
+        super.onBindInput()
+        bound = true
+    }
+
     override fun onStartInput(attribute: EditorInfo, restarting: Boolean) {
         super.onStartInput(attribute, restarting)
         main.removeCallbacks(leave)
-        // A restart counts too: a browser or a Compose app moves to another field that way.
-        Dictation.inputStarted()
+        // A restart counts too: a browser or a Compose app moves to another field that way. The keyboard switched in
+        // does not (bound just now, or the dot's switch still showing it, its click on the field included): a
+        // dictation begun under another keyboard goes into its field as before; another app is told apart by the app
+        // check on insertion.
+        val switchedIn = bound || SystemClock.uptimeMillis() - showRequestedAt < SHOW_AFTER_SWITCH_MS
+        if (!switchedIn) Dictation.inputStarted()
+        bound = false
         // A send tapped for the field in front is not for the next one.
         sendOnce = false
         val app = attribute.packageName
