@@ -467,11 +467,13 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         rects.getOrPut(Key.PASTE_CLOSE, ::RectF).set(closeLeft - CLOSE_REACH * s, pastePill.top, pastePill.right, pastePill.bottom)
     }
 
-    /** The mic's touch-down, once its ring is on screen; a start that fails fades the ring out. */
+    /** The mic's touch-down, once its ring and live keys are on screen; a start that fails takes them back at once. */
     private fun startMic() {
         actions.onMicDown()
         if (model.state == Dictation.State.IDLE) {
-            recMark.to(0f, REC_OUT_MS, STANDARD_ACCELERATE)
+            recMark.jump(0f)
+            pauseLive.jump(0f)
+            cancelLive.jump(if (cancels(model)) 1f else 0f)
             invalidate()
         }
     }
@@ -486,19 +488,20 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
             if (old.state == Dictation.State.PROCESSING && new.state == Dictation.State.IDLE && !new.canRetry && new.statusKind == StatusKind.HINT) landedAt = now()
         }
         if (new.state == Dictation.State.RECORDING && old.state != Dictation.State.RECORDING) voice.reset()
-        // The recording mark: there at once, as on the dot, out with a short fade; it stays through processing, where
-        // it turns into the busy arc.
+        // The recording mark: there and gone at once, as on the dot; it stays through processing, where it turns into
+        // the busy arc.
         val marked = new.state == Dictation.State.RECORDING || new.state == Dictation.State.PROCESSING
         val wasMarked = old.state == Dictation.State.RECORDING || old.state == Dictation.State.PROCESSING
-        if (marked && !wasMarked) recMark.jump(1f) else recMark.to(if (marked) 1f else 0f, REC_OUT_MS, STANDARD_ACCELERATE)
+        if (marked != wasMarked) recMark.jump(if (marked) 1f else 0f)
         playing.to(if (new.state == Dictation.State.PAUSED) 1f else 0f)
         busy.to(if (new.state == Dictation.State.PROCESSING) 1f else 0f)
         playDisc.to(if (new.state == Dictation.State.PAUSED) 1f else 0f)
         val retry = showsRetry(new)
         if (retry && !showsRetry(old)) retryAt = now()
         retryShown.to(if (retry) 1f else 0f)
-        pauseLive.to(if (new.state.open) 1f else 0f)
-        cancelLive.to(if (cancels(new)) 1f else 0f)
+        // Pause and × turn live and back at once, with the recording.
+        pauseLive.jump(if (new.state.open) 1f else 0f)
+        cancelLive.jump(if (cancels(new)) 1f else 0f)
         styleOpen.to(if (new.open == Key.STYLE) 1f else 0f, if (new.open == Key.STYLE) OPEN_MS else CLOSE_MS)
         translateOpen.to(if (new.open == Key.TRANSLATE) 1f else 0f, if (new.open == Key.TRANSLATE) OPEN_MS else CLOSE_MS)
         clipboardOpen.to(if (new.open == Key.CLIPBOARD) 1f else 0f)
@@ -1452,8 +1455,9 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
     private val playing = Tween(PLAY_MS)
     private val playDisc = Tween(PLAY_DISC_MS, delay = PLAY_DISC_DELAY_MS)
     private val retryShown = Tween(RETRY_MS, delay = RETRY_DELAY_MS)
-    private val pauseLive = Tween(KEYS_LIVE_MS, delay = KEYS_LIVE_DELAY_MS)
-    private val cancelLive = Tween(KEYS_LIVE_MS, delay = KEYS_LIVE_DELAY_MS)
+    // Set with jump only: no easing.
+    private val pauseLive = Tween(1L)
+    private val cancelLive = Tween(1L)
     private val styleOpen = Tween(OPEN_MS)
     private val translateOpen = Tween(OPEN_MS)
     private val clipboardOpen = Tween(KEY_TINT_MS)
@@ -1462,7 +1466,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
     private val pasteRow = Tween(PASTE_IN_MS)
     private val busy = Tween(BUSY_MS)
     private val sendOnceOn = Tween(SEND_ON_MS)
-    private val recMark = Tween(REC_OUT_MS, STANDARD_ACCELERATE)
+    private val recMark = Tween(1L)
     private val tweens = listOf(playing, playDisc, retryShown, pauseLive, cancelLive, styleOpen, translateOpen, clipboardOpen, emojiOpen, sendOn, sendOnceOn, pasteRow, busy, recMark)
 
     private var shownPaste: String? = null
@@ -1803,13 +1807,15 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
                 performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
                 when (key) {
                     // Capture starts on touch-down. The recording ring is drawn first, in this frame: opening the mic
-                    // can hold the main thread for a moment, and the ring must not wait for it. A start that fails
-                    // leaves the model idle, and the ring fades out.
+                    // can hold the main thread for a moment, and the ring must not wait for it; Pause and × go live
+                    // with it. A start that fails leaves the model idle, and they go back.
                     Key.MIC -> {
                         micDownAt = now()
                         startedOnDown = model.state == Dictation.State.IDLE && model.micEnabled
                         if (startedOnDown) {
                             recMark.jump(1f)
+                            pauseLive.jump(1f)
+                            cancelLive.jump(1f)
                             invalidate()
                             // After this frame is drawn; a panel not on screen draws nothing, so it starts at once.
                             if (isAttachedToWindow) postOnAnimation { post(::startMic) } else startMic()
@@ -2393,7 +2399,6 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         const val REC_CORE_ALPHA = 0.75f
         const val REC_GLOW = 12f
         const val REC_GLOW_ALPHA = 0.65f
-        const val REC_OUT_MS = 160L
         /** Processing: a 90° arc on a 16 % track of the same colour, a turn per SPIN_MS. */
         const val BUSY_ARC = 90f
         const val BUSY_TRACK = 0.16f
@@ -2486,8 +2491,6 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         const val PLAY_DISC_DELAY_MS = 40L
         const val RETRY_MS = 260L
         const val RETRY_DELAY_MS = 60L
-        const val KEYS_LIVE_MS = 160L
-        const val KEYS_LIVE_DELAY_MS = 60L
         const val OPEN_MS = 180L
         const val CLOSE_MS = 120L
         const val KEY_TINT_MS = 120L
