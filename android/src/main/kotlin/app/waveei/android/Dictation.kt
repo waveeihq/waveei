@@ -1048,7 +1048,10 @@ object Dictation {
             error.kind == Api.LOOPED -> app.getString(R.string.error_looped)
             error.kind == Api.BLOCKED -> app.getString(R.string.error_blocked)
             error.kind == Api.NO_TEXT -> app.getString(R.string.error_no_text)
-            error.code == 429 -> app.getString(R.string.error_busy)
+            // Who said no, in a few words: the connection, our server or the model.
+            error.code == 429 -> app.getString(R.string.error_model_busy)
+            error.code == 502 -> app.getString(R.string.error_model_down)
+            error.code == 503 -> app.getString(R.string.error_busy)
             error.code >= 500 -> app.getString(R.string.error_server)
             error.code > 0 -> app.getString(R.string.error_refused)
             else -> app.getString(R.string.error_unknown)

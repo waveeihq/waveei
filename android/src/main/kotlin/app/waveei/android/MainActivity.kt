@@ -455,12 +455,12 @@ class MainActivity : ComponentActivity() {
                         notificationsPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
                 }.onFailure {
-                    // The network's own error text ("Unable to resolve host…") said in plain words, as the install does.
+                    // In plain words, as the install says it: no connection, or only that it failed; the log has the rest.
                     updateStatus = when (it) {
                         is java.net.UnknownHostException, is java.net.ConnectException, is java.net.SocketTimeoutException -> getString(R.string.update_no_network)
-                        else -> it.message
+                        else -> getString(R.string.update_check_failed)
                     }
-                    DebugLog.add("update: check failed: ${it.javaClass.simpleName}")
+                    DebugLog.add("update: check failed: ${it.javaClass.simpleName}: ${it.message}")
                 }
             }
         }.start()

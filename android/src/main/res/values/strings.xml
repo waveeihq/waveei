@@ -18,16 +18,18 @@
     <!-- A failure says only what happened: Retry beside it already says the recording is kept. -->
     <string name="failed_kept">%1$s</string>
     <string name="cancelled_kept">Stopped</string>
-    <string name="no_answer_in_time">Server took too long</string>
+    <string name="no_answer_in_time">Connection too slow</string>
     <!-- Why a transcription failed, the whole status line; plain words, no vendor or model; the log keeps the technical reason. -->
-    <string name="error_looped">Couldn’t turn this into text</string>
-    <string name="error_blocked">Couldn’t turn this into text</string>
+    <string name="error_looped">Model got stuck</string>
+    <string name="error_blocked">Model refused it</string>
     <string name="error_unverified">Phone not verified</string>
-    <string name="error_no_text">No words came back</string>
+    <string name="error_no_text">Model heard no words</string>
     <string name="error_unknown">Something went wrong</string>
     <string name="error_busy">Server busy</string>
     <string name="error_server">Server error</string>
-    <string name="error_refused">Refused by the server</string>
+    <string name="error_refused">Server refused it</string>
+    <string name="error_model_busy">Model busy</string>
+    <string name="error_model_down">Model not answering</string>
     <string name="saved_to_buffer">Saved to history</string>
     <string name="style_skipped">Inserted without style</string>
     <string name="copied">Copied</string>
@@ -474,6 +476,7 @@
     <string name="downloading">Downloading…</string>
     <string name="allow_installs">Allow Waveei to install updates, then come back</string>
     <string name="update_no_network">No connection</string>
+    <string name="update_check_failed">Couldn’t check</string>
     <string name="downloading_version">Downloading version %1$s</string>
     <string name="install">Install</string>
     <string name="update_failed">Update failed</string>
