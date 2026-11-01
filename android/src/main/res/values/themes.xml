@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Compose draws the whole app; the window only needs no action bar and the page colour,
+         so nothing flashes before the first frame. -->
+    <style name="AppTheme" parent="@android:style/Theme.DeviceDefault.DayNight">
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowBackground">#F3F5F8</item>
+        <!-- Launch screen: the mark's waves rise into place on the page colour (app-page). Theme "System". -->
+        <item name="android:windowSplashScreenBackground">#F3F5F8</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_icon_animated</item>
+        <item name="android:windowSplashScreenAnimationDuration">780</item>
+    </style>
+
+    <!-- The launch screen for Settings › Theme Light or Dark, whatever the system's: MainActivity hands one to
+         Android (setSplashScreenTheme), which keeps it for the next launches. Only the splash attributes count. -->
+    <style name="SplashDay">
+        <item name="android:windowSplashScreenBackground">#F3F5F8</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_icon_animated</item>
+        <item name="android:windowSplashScreenAnimationDuration">780</item>
+    </style>
+
+    <style name="SplashNight">
+        <item name="android:windowSplashScreenBackground">#0E1520</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_icon_animated</item>
+        <item name="android:windowSplashScreenAnimationDuration">780</item>
+    </style>
+</resources>

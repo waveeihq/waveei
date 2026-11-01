@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launch screen mark: the launcher icon as its rounded-square tile (corners 15 % of its side: radius 7.425 of the 49.5-unit tile, 19.8 dp), never a circle.
+     Same geometry and colours as ic_launcher_background / ic_launcher_foreground (their visible 72 of 108, as the
+     launcher and the store icon show it), scaled to a 132 dp tile centred
+     in the 288 dp splash icon, so Android's 192 dp circular mask never reaches it; around the tile it is transparent and
+     the page colour shows. The waves rise into place inside the tile, clipped to it. At rest it is the icon exactly; the
+     motion lives only in the animators. Generated from the launcher files: keep them in step. -->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="288dp"
+            android:height="288dp"
+            android:viewportWidth="108"
+            android:viewportHeight="108">
+            <group android:name="mark">
+                <clip-path
+                    android:name="tile_clip"
+                    android:pathData="M36.675,29.25H71.325A7.425,7.425 0 0 1 78.75,36.675V71.325A7.425,7.425 0 0 1 71.325,78.75H36.675A7.425,7.425 0 0 1 29.25,71.325V36.675A7.425,7.425 0 0 1 36.675,29.25Z" />
+                <path
+                    android:name="tile"
+                    android:pathData="M36.675,29.25H71.325A7.425,7.425 0 0 1 78.75,36.675V71.325A7.425,7.425 0 0 1 71.325,78.75H36.675A7.425,7.425 0 0 1 29.25,71.325V36.675A7.425,7.425 0 0 1 36.675,29.25Z">
+                    <aapt:attr name="android:fillColor">
+                        <gradient android:type="linear" android:startX="54" android:startY="16.88" android:endX="54" android:endY="91.12" android:startColor="#FFFFFFFF" android:endColor="#FFEFF5FB" />
+                    </aapt:attr>
+                </path>
+                <group android:name="back">
+                    <path
+                        android:name="back_wave"
+                        android:pathData="M7.69,54.32L8.4,54.58L9.13,54.94L9.9,55.35L10.71,55.84L11.57,56.36L12.47,56.93L13.42,57.52L14.42,58.12L15.48,58.73L16.59,59.32L17.76,59.89L18.96,60.41L20.22,60.9L21.51,61.31L22.84,61.67L24.19,61.93L25.56,62.13L26.95,62.23L28.34,62.24L29.73,62.17L31.11,62.01L32.47,61.76L33.8,61.44L35.11,61.04L36.37,60.58L37.6,60.07L38.78,59.51L39.91,58.93L40.98,58.32L42,57.72L42.97,57.12L43.89,56.54L44.76,56.01L45.58,55.51L46.36,55.07L47.11,54.69L47.83,54.4L48.52,54.18L49.2,54.04L49.88,54L50.55,54.04L51.23,54.18L51.92,54.4L52.64,54.69L53.39,55.07L54.17,55.51L54.99,56.01L55.86,56.54L56.78,57.12L57.75,57.72L58.77,58.32L59.84,58.93L60.97,59.51L62.15,60.07L63.38,60.58L64.64,61.04L65.95,61.44L67.28,61.76L68.64,62.01L70.02,62.17L71.41,62.24L72.8,62.23L74.19,62.13L75.56,61.93L76.91,61.67L78.24,61.31L79.53,60.9L80.78,60.41L82,59.89L83.16,59.32L84.27,58.73L85.33,58.12L86.33,57.52L87.28,56.93L88.18,56.36L89.03,55.84L89.85,55.35L90.62,54.94L91.35,54.58L92.06,54.32L92.75,54.12L93.43,54.02L94.1,54.01L94.77,54.08L95.46,54.24L96.16,54.49L96.89,54.81L97.64,55.21L99.38,99.38L8.62,99.38Z">
+                        <aapt:attr name="android:fillColor">
+                            <gradient android:type="linear" android:startX="54" android:startY="54" android:endX="54" android:endY="85.62" android:startColor="#FFD3EDFF" android:endColor="#FFA6D8FF" />
+                        </aapt:attr>
+                    </path>
+                </group>
+                <group android:name="front">
+                    <path
+                        android:name="front_wave"
+                        android:pathData="M8.52,69.81L9.96,69.78L11.4,69.62L12.81,69.34L14.2,68.95L15.55,68.46L16.85,67.87L18.1,67.21L19.29,66.48L20.42,65.73L21.47,64.94L22.47,64.17L23.4,63.41L24.26,62.7L25.07,62.04L25.82,61.47L26.53,60.98L27.19,60.61L27.84,60.35L28.47,60.21L29.09,60.19L29.71,60.31L30.35,60.55L31.01,60.9L31.71,61.36L32.45,61.93L33.25,62.57L34.1,63.27L35.02,64.02L35.99,64.79L37.04,65.57L38.15,66.34L39.34,67.07L40.57,67.74L41.87,68.35L43.21,68.86L44.59,69.28L46,69.58L47.43,69.76L48.87,69.81L50.31,69.74L51.74,69.54L53.15,69.23L54.53,68.8L55.86,68.27L57.15,67.66L58.38,66.97L59.55,66.24L60.65,65.47L61.69,64.69L62.66,63.91L63.57,63.17L64.41,62.48L65.2,61.84L65.94,61.3L66.63,60.85L67.29,60.51L67.92,60.29L68.55,60.19L69.17,60.22L69.79,60.38L70.44,60.66L71.11,61.05L71.83,61.54L72.59,62.13L73.4,62.79L74.27,63.52L75.21,64.27L76.21,65.06L77.28,65.83L78.41,66.59L79.62,67.3L80.87,67.96L82.18,68.53L83.53,69.02L84.93,69.39L86.35,69.65L87.78,69.79L89.23,69.81L90.66,69.69L92.09,69.45L93.49,69.1L94.85,68.64L96.17,68.07L97.44,67.43L98.65,66.73L99.79,65.98L100.88,65.21L101.9,64.43L99.38,99.38L8.62,99.38Z">
+                        <aapt:attr name="android:fillColor">
+                            <gradient android:type="linear" android:startX="54" android:startY="60.19" android:endX="54" android:endY="85.62" android:startColor="#FF6CC2FF" android:endColor="#FF2F86F0" />
+                        </aapt:attr>
+                    </path>
+                </group>
+            </group>
+        </vector>
+    </aapt:attr>
+    <target
+        android:name="back"
+        android:animation="@animator/splash_wave_back" />
+    <target
+        android:name="front"
+        android:animation="@animator/splash_wave_front" />
+</animated-vector>

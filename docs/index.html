@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Waveei · Talk. It types.</title>
+<meta name="description" content="Waveei turns what you say into clean text, right where you are typing. A voice keyboard, now on Android. Start free.">
+<meta property="og:title" content="Waveei · Talk. It types.">
+<meta property="og:description" content="A voice keyboard that turns what you say into clean text. Start free.">
+<meta property="og:image" content="assets/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --page: #F3F5F8; --card: #FFFFFF; --line: #E3E8EF; --ink: #15191F; --ink2: #5A6270; --ink3: #687180;
+    --acc: #0E70F4; --accInk: #0B5FD0; --soft: #EDF4FF; --fill: #0E70F4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page: #0E1520; --card: #172131; --line: #222D3E; --ink: #E4EAF3; --ink2: #97A3B6; --ink3: #7D899C;
+      --acc: #6DB0FF; --accInk: #6DB0FF; --soft: #15263E; --fill: #1E6FE6;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body { background: var(--page); color: var(--ink); font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; line-height: 1.5; }
+  a { color: inherit; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+  img { display: block; width: 100%; height: auto; }
+  nav { display: flex; align-items: center; gap: 10px; padding: 20px 0; }
+  nav img { width: 32px; height: 32px; }
+  nav b { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+  nav .links { margin-left: auto; display: flex; gap: 20px; font-size: 15px; font-weight: 500; color: var(--ink2); }
+  nav .links a { text-decoration: none; }
+  .hero { border-radius: 28px; overflow: hidden; margin-top: 8px; }
+  .lead { text-align: center; max-width: 620px; margin: 40px auto 0; font-size: 20px; color: var(--ink2); }
+  .lead b { color: var(--ink); font-weight: 650; }
+  .cta { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 12px 24px; border-radius: 999px; font-size: 16px; font-weight: 600; text-decoration: none; }
+  .btn.fill { background: var(--fill); color: #fff; }
+  .btn.ghost { background: var(--card); border: 1px solid var(--line); color: var(--ink); }
+  .note { text-align: center; margin-top: 12px; font-size: 14px; color: var(--ink3); }
+  section { margin-top: 72px; }
+  h2 { font-size: 36px; line-height: 1.1; font-weight: 800; letter-spacing: -0.035em; }
+  h2 span { color: inherit; }
+  .eyebrow { font-size: 12px; font-weight: 650; letter-spacing: .08em; color: var(--ink3); margin-bottom: 10px; }
+  .eyebrow b { color: var(--acc); font-weight: 650; }
+  .shot { margin-top: 24px; border-radius: 24px; overflow: hidden; border: 1px solid var(--line); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 28px 40px; margin-top: 32px; }
+  .feat { max-width: 36ch; }
+  .feat h3 { font-size: 17px; font-weight: 650; }
+  .feat p { margin-top: 6px; font-size: 15px; color: var(--ink2); }
+  .promise { max-width: 72ch; display: flex; gap: 12px; align-items: flex-start; margin-top: 24px; background: var(--soft); border-radius: 18px; padding: 18px 20px; font-size: 16px; font-weight: 550; }
+  .promise svg { flex: none; margin-top: 2px; }
+  .promise a { color: var(--accInk); }
+  footer { margin: 80px 0 40px; display: flex; flex-wrap: wrap; gap: 20px; align-items: center; font-size: 14px; color: var(--ink3); }
+  footer a { text-decoration: none; }
+  footer .sp { margin-left: auto; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .dark { display: none; }
+  @media (prefers-color-scheme: dark) { .light { display: none; } .dark { display: block; } }
+  @media (max-width: 560px) {
+    nav .links { gap: 14px; font-size: 14px; }
+    .lead { font-size: 17px; }
+    h2 { font-size: 28px; }
+    section { margin-top: 56px; }
+    footer .sp { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <img src="assets/mark.png" alt="">
+    <b>Waveei</b>
+    <div class="links"><a href="#pricing">Pricing</a><a href="#privacy">Privacy</a><a href="https://github.com/waveeihq/waveei">Source</a></div>
+  </nav>
+
+  <h1 class="sr">Talk. It types.</h1>
+  <div class="hero">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="assets/hero-dark.png">
+      <img src="assets/hero.png" alt="Waveei. Talk. It types. A laptop, a tablet and a phone, each with Waveei on it.">
+    </picture>
+  </div>
+
+  <p class="lead"><b>You talk faster than you type.</b> Waveei turns what you say into clean text, right where you are typing. Cross-platform by design. Now on Android.</p>
+  <div class="cta">
+    <a class="btn fill" href="https://github.com/waveeihq/waveei/releases/latest">Get Waveei for Android</a>
+    <a class="btn ghost" href="#pricing">See pricing</a>
+  </div>
+  <p class="note">Android 13 or newer. 30 free minutes every week, no sign-up.</p>
+
+  <section>
+    <h2>Say it messy, <span>get it clean.</span></h2>
+    <div class="shot">
+      <picture>
+        <source media="(max-width: 560px) and (prefers-color-scheme: dark)" srcset="assets/demo-narrow-dark.png">
+        <source media="(max-width: 560px)" srcset="assets/demo-narrow.png">
+        <source media="(prefers-color-scheme: dark)" srcset="assets/demo-dark.png">
+        <img src="assets/demo.png" alt="You say: so um tell Ana the table's booked, uh, for seven, no wait, for six, by the window. It types: Tell Ana the table's booked for six, by the window.">
+      </picture>
+    </div>
+    <div class="shot">
+      <picture>
+        <source media="(max-width: 560px) and (prefers-color-scheme: dark)" srcset="assets/keyboard-narrow-dark.png">
+        <source media="(max-width: 560px)" srcset="assets/keyboard-narrow.png">
+        <source media="(prefers-color-scheme: dark)" srcset="assets/keyboard-dark.png">
+        <img src="assets/keyboard.png" alt="The Waveei keyboard while it listens: a ring around the mic, the words appearing above it.">
+      </picture>
+    </div>
+  </section>
+
+  <section>
+    <h2>One mic, <span>a few helpers.</span></h2>
+    <div class="grid">
+      <div class="feat"><h3>Over any app</h3><p>The record dot floats over every app and types into the field in front, whichever keyboard is open.</p></div>
+      <div class="feat"><h3>Sends it for you</h3><p>With Auto-send on, Waveei presses the app's Send button once the text is in.</p></div>
+      <div class="feat"><h3>Your tone</h3><p>Message keeps it casual, Formal polishes it.</p></div>
+      <div class="feat"><h3>Into another language</h3><p>Speak in yours, and the text comes in the language you pick under Translate.</p></div>
+      <div class="feat"><h3>Nothing lost</h3><p>A dictation that fails stays on the phone to try again, and History keeps the last few to insert again.</p></div>
+      <div class="feat"><h3>Your words</h3><p>Add names and jargon to your Vocabulary, and Waveei spells them your way.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="shot">
+      <picture>
+        <source media="(max-width: 560px) and (prefers-color-scheme: dark)" srcset="assets/themes-narrow-dark.png">
+        <source media="(max-width: 560px)" srcset="assets/themes-narrow.png">
+        <source media="(prefers-color-scheme: dark)" srcset="assets/themes-dark.png">
+        <img src="assets/themes.png" alt="Day or night, it fits right in. The Waveei keyboard in light and in dark: light, dark or match the phone, in Settings.">
+      </picture>
+    </div>
+  </section>
+
+  <section id="pricing">
+    <div class="shot">
+      <picture>
+        <source media="(max-width: 560px) and (prefers-color-scheme: dark)" srcset="assets/pricing-narrow-dark.png">
+        <source media="(max-width: 560px)" srcset="assets/pricing-narrow.png">
+        <source media="(prefers-color-scheme: dark)" srcset="assets/pricing-dark.png">
+        <img src="assets/pricing.png" alt="Start free. Talk without limits. Free, $0: 30 minutes every week, no sign-up, no card, Style and Translate, floating dots and History. Waveei Tide, $6 a month: everything in Free, plus no weekly limit, live words as you talk, and your settings and words on all your phones. Cancel any time; tax where it applies.">
+      </picture>
+    </div>
+  </section>
+
+  <section id="privacy">
+    <h2>What you say <span>stays yours.</span></h2>
+    <div class="promise">
+      <svg width="22" height="22" viewBox="0 0 256 256"><path fill="var(--acc)" d="M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm0,72c0,37.07-13.66,67.16-40.6,89.42A129.3,129.3,0,0,1,128,223.62a128.25,128.25,0,0,1-38.92-21.81C61.82,179.51,48,149.3,48,112l0-56,160,0ZM82.34,141.66a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32l-56,56a8,8,0,0,1-11.32,0Z"/></svg>
+      <div>Zero data retention on our side: your audio and dictated text are never stored, and none of it trains a model. Nothing is recorded before you tap the mic, and nothing from password fields. <a href="https://github.com/waveeihq/waveei/blob/main/PRIVACY.md">The full privacy policy</a></div>
+    </div>
+  </section>
+
+  <footer>
+    <img src="assets/mark.png" alt="" width="24" height="24" style="width:24px">
+    <span>Waveei</span>
+    <a href="https://github.com/waveeihq/waveei/blob/main/PRIVACY.md">Privacy</a>
+    <a href="https://github.com/waveeihq/waveei/blob/main/TERMS.md">Terms</a>
+    <a href="https://github.com/waveeihq/waveei">Source code</a>
+    <a class="sp" href="https://github.com/waveeihq/waveei/releases/latest">Get Waveei for Android</a>
+  </footer>
+</div>
+</body>
+</html>

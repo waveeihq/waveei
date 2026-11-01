@@ -1,0 +1,62 @@
+[
+  {
+    "name": "empty field gets nothing",
+    "before": "",
+    "separator": "SPACE",
+    "expected": ""
+  },
+  {
+    "name": "none",
+    "before": "Hello",
+    "separator": "NONE",
+    "expected": ""
+  },
+  {
+    "name": "space after a word",
+    "before": "Hello",
+    "separator": "SPACE",
+    "expected": " "
+  },
+  {
+    "name": "space is not doubled",
+    "before": "Hello ",
+    "separator": "SPACE",
+    "expected": ""
+  },
+  {
+    "name": "space after a new line is not added",
+    "before": "Hello\n",
+    "separator": "SPACE",
+    "expected": ""
+  },
+  {
+    "name": "new line after a word",
+    "before": "Hello.",
+    "separator": "NEW_LINE",
+    "expected": "\n"
+  },
+  {
+    "name": "new line is not doubled",
+    "before": "Hello.\n",
+    "separator": "NEW_LINE",
+    "expected": ""
+  },
+  {
+    "name": "new paragraph after a word",
+    "before": "Hello.",
+    "separator": "NEW_PARAGRAPH",
+    "expected": "\n\t"
+  },
+  {
+    "name": "new paragraph on an empty line",
+    "before": "Hello.\n",
+    "separator": "NEW_PARAGRAPH",
+    "expected": "\t"
+  },
+  {
+    "name": "new paragraph already indented with a tab",
+    "before": "Hello.\n\t",
+    "separator": "NEW_PARAGRAPH",
+    "expected": ""
+  }
+]

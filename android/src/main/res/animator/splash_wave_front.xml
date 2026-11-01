@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The deeper front wave starts just below the tile (30 of the icon's 108, here 20.63 of the splash viewport) and
+     settles last, drifting in from the right, over 780 ms. No start delay, so the drawable's own state stays the icon. -->
+<set xmlns:android="http://schemas.android.com/apk/res/android">
+    <objectAnimator
+        android:duration="780"
+        android:interpolator="@interpolator/splash_ease_out"
+        android:propertyName="translateY"
+        android:valueFrom="20.63"
+        android:valueTo="0"
+        android:valueType="floatType" />
+    <objectAnimator
+        android:duration="780"
+        android:interpolator="@interpolator/splash_ease_out"
+        android:propertyName="translateX"
+        android:valueFrom="4.13"
+        android:valueTo="0"
+        android:valueType="floatType" />
+</set>

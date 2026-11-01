@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cubic ease-out, cubic-bezier(0.33, 1, 0.68, 1): the water keeps moving through most of the time and settles
+     softly, no overshoot (Material 3's emphasized decelerate finishes in the first fifth, too abrupt here). -->
+<pathInterpolator xmlns:android="http://schemas.android.com/apk/res/android"
+    android:controlX1="0.33"
+    android:controlY1="1"
+    android:controlX2="0.68"
+    android:controlY2="1" />

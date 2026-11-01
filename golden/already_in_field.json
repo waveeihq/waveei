@@ -1,0 +1,62 @@
+[
+  {
+    "name": "exact match in a longer field",
+    "dictation": "See you at 7, bring the charger.",
+    "field": "Hi! See you at 7, bring the charger. Thanks",
+    "expected": true
+  },
+  {
+    "name": "case and punctuation are ignored",
+    "dictation": "best budget mechanical keyboard 2026",
+    "field": "Best budget mechanical keyboard, 2026?",
+    "expected": true
+  },
+  {
+    "name": "word boundaries are respected",
+    "dictation": "cat",
+    "field": "concatenate",
+    "expected": false
+  },
+  {
+    "name": "missing from the field",
+    "dictation": "see you tomorrow",
+    "field": "see you today",
+    "expected": false
+  },
+  {
+    "name": "empty dictation is never present",
+    "dictation": " ... ",
+    "field": "anything",
+    "expected": false
+  },
+  {
+    "name": "empty field",
+    "dictation": "hello",
+    "field": "",
+    "expected": false
+  },
+  {
+    "name": "cyrillic",
+    "dictation": "Встретимся в 7, возьми зарядку",
+    "field": "Привет. встретимся в 7 — возьми зарядку!",
+    "expected": true
+  },
+  {
+    "name": "long dictation, exact",
+    "dictation": "we met at the station and talked about the new schedule for the summer trains then we walked to the old market where they sell fresh bread and cheese every morning after lunch we went back home because it started to rain and the wind was cold in the evening we called our parents and told them about the trip and the plans for next week",
+    "field": "Notes: we met at the station and talked about the new schedule for the summer trains then we walked to the old market where they sell fresh bread and cheese every morning after lunch we went back home because it started to rain and the wind was cold in the evening we called our parents and told them about the trip and the plans for next week",
+    "expected": true
+  },
+  {
+    "name": "long dictation with one small edit still counts",
+    "dictation": "we met at the station and talked about the new schedule for the summer trains then we walked to the old market where they sell fresh bread and cheese every morning after lunch we went back home because it started to rain and the wind was cold in the evening we called our parents and told them about the trip and the plans for next week",
+    "field": "we met at the station and talked about the new schedule for the summer trains then we walked to the old covered market where they sell fresh bread and cheese every morning after lunch we went back home because it started to rain and the wind was cold in the evening we called our parents and told them about the trip and the plans for next week",
+    "expected": true
+  },
+  {
+    "name": "long dictation absent",
+    "dictation": "we met at the station and talked about the new schedule for the summer trains then we walked to the old market where they sell fresh bread and cheese every morning after lunch we went back home because it started to rain and the wind was cold in the evening we called our parents and told them about the trip and the plans for next week",
+    "field": "a completely different text about something else",
+    "expected": false
+  }
+]
