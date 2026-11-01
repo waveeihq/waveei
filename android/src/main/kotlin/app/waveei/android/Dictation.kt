@@ -1045,18 +1045,11 @@ object Dictation {
             // Before the plan: App Check's refusal of a free call comes with the same 403 as "Tide needed".
             error.kind == Api.UNVERIFIED -> app.getString(R.string.error_unverified)
             error.code == Plan.NEEDED -> app.getString(R.string.tide_needed)
-            error.kind == Api.LOOPED -> app.getString(R.string.error_looped)
-            error.kind == Api.BLOCKED -> app.getString(R.string.error_blocked)
-            error.kind == Api.NO_TEXT -> app.getString(R.string.error_no_text)
-            // Who said no, in a few words: the connection, our server or the model.
-            error.code == 429 -> app.getString(R.string.error_model_busy)
-            error.code == 502 -> app.getString(R.string.error_model_down)
-            error.code == 503 -> app.getString(R.string.error_busy)
-            error.code >= 500 -> app.getString(R.string.error_server)
-            error.code > 0 -> app.getString(R.string.error_refused)
-            else -> app.getString(R.string.error_unknown)
+            error.kind == Api.NO_TEXT -> app.getString(R.string.nothing_heard)
+            // For people there are two causes only: their internet (below) or our server, whatever failed behind it.
+            else -> app.getString(R.string.error_server)
         }
-        // The connection itself failed (no network, the network changed, a timeout): said in words, not as a class name.
+        // Their internet: none, or too slow. Never a class name or a raw message; the log has them.
         is java.io.InterruptedIOException -> app.getString(if (isOnline()) R.string.no_answer_in_time else R.string.no_network)
         is java.io.IOException -> app.getString(R.string.no_network)
         // Never a class name or a raw message in the line people read; the log has them.
