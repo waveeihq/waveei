@@ -478,12 +478,11 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
             if (old.state == Dictation.State.PROCESSING && new.state == Dictation.State.IDLE && !new.canRetry && new.statusKind == StatusKind.HINT) landedAt = now()
         }
         if (new.state == Dictation.State.RECORDING && old.state != Dictation.State.RECORDING) voice.reset()
-        // The recording mark: in with the M3 focus ring's grow-and-settle, out with a short fade; it stays through
-        // processing, where it turns into the busy arc.
+        // The recording mark: there at once, as on the dot, out with a short fade; it stays through processing, where
+        // it turns into the busy arc.
         val marked = new.state == Dictation.State.RECORDING || new.state == Dictation.State.PROCESSING
         val wasMarked = old.state == Dictation.State.RECORDING || old.state == Dictation.State.PROCESSING
-        if (marked && !wasMarked) recAt = now()
-        recMark.to(if (marked) 1f else 0f, if (marked) REC_GROW_MS else REC_OUT_MS, if (marked) LINEAR else STANDARD_ACCELERATE)
+        if (marked && !wasMarked) recMark.jump(1f) else recMark.to(if (marked) 1f else 0f, REC_OUT_MS, STANDARD_ACCELERATE)
         playing.to(if (new.state == Dictation.State.PAUSED) 1f else 0f)
         busy.to(if (new.state == Dictation.State.PROCESSING) 1f else 0f)
         playDisc.to(if (new.state == Dictation.State.PAUSED) 1f else 0f)
@@ -1001,17 +1000,8 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         if (shown <= 0f) return
         val c = colors
         val color = c.rec
-        val alpha = (shown * REC_GROW_MS / REC_ALPHA_MS).coerceAtMost(1f)
-        // Width: 0 → REC_PEAK × core in the first 150 ms, then settles to the core in 450 ms (the M3 focus ring).
-        val width = if (snap()) 1f else {
-            val t = (now() - recAt).toFloat()
-            when {
-                t < REC_IN_MS -> REC_PEAK * EMPHASIZED_DECELERATE.getInterpolation(t / REC_IN_MS)
-                t < REC_IN_MS + REC_SETTLE_MS -> lerp(REC_PEAK, 1f, STANDARD.getInterpolation((t - REC_IN_MS) / REC_SETTLE_MS))
-                else -> 1f
-            }
-        }
-        val core = REC_WIDTH * s * width
+        val alpha = shown
+        val core = REC_WIDTH * s
         val radius = (BALL / 2 + REC_GAP + REC_CORE / 2) * s
         tmp.set(micX - radius, micY - radius, micX + radius, micY + radius)
         if (recGlowSize != s) {
@@ -1443,6 +1433,13 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         }
 
         fun moving(): Boolean = !snap() && now() - at < ms + delay
+
+        /** Straight to [value], no easing. */
+        fun jump(value: Float) {
+            from = value
+            target = value
+            at = 0L
+        }
     }
 
     private val playing = Tween(PLAY_MS)
@@ -1458,8 +1455,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
     private val pasteRow = Tween(PASTE_IN_MS)
     private val busy = Tween(BUSY_MS)
     private val sendOnceOn = Tween(SEND_ON_MS)
-    private val recMark = Tween(REC_GROW_MS, LINEAR)
-    private var recAt = 0L
+    private val recMark = Tween(REC_OUT_MS, STANDARD_ACCELERATE)
     private val tweens = listOf(playing, playDisc, retryShown, pauseLive, cancelLive, styleOpen, translateOpen, clipboardOpen, emojiOpen, sendOn, sendOnceOn, pasteRow, busy, recMark)
 
     private var shownPaste: String? = null
@@ -1714,7 +1710,6 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         if (t - statusAt < STATUS_FADE_MS || t - liveAt < LIVE_SLIDE_MS || t - waterAt < waterMs) return true
         if (t - landedAt < LANDED_MS || t - retryAt < RETRY_RING_FROM_MS + RETRY_RING_MS) return true
         if (t - badgeAt < BADGE_DELAY_MS + BADGE_IN_MS) return true
-        if (t - recAt < REC_IN_MS + REC_SETTLE_MS) return true
         if (panelOpen()) return false
         return model.state == Dictation.State.RECORDING || model.state == Dictation.State.PROCESSING
     }
@@ -2386,11 +2381,6 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         const val REC_CORE_ALPHA = 0.75f
         const val REC_GLOW = 12f
         const val REC_GLOW_ALPHA = 0.65f
-        const val REC_PEAK = 2f
-        const val REC_IN_MS = 150f
-        const val REC_SETTLE_MS = 450f
-        const val REC_GROW_MS = 600L
-        const val REC_ALPHA_MS = 150f
         const val REC_OUT_MS = 160L
         /** Processing: a 90° arc on a 16 % track of the same colour, a turn per SPIN_MS. */
         const val BUSY_ARC = 90f
