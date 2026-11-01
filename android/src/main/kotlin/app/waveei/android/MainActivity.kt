@@ -166,7 +166,8 @@ class MainActivity : ComponentActivity() {
     /**
      * Leaves into the app in two steps, never the mark over the content: first the mark grows a touch and fades on the
      * whole page colour, then the bare page fades into the app. A launch with no mark (opened by the keyboard or a dot,
-     * see [splashless]) only fades the page. At once with animations off.
+     * see [splashless]) only fades the page. The mark's own animation ends before the exit starts, and the exit is
+     * slow enough to be seen, so a fast start never flashes a frame. At once with animations off.
      */
     private fun fadeSplash() = splashScreen.setOnExitAnimationListener { view ->
         if (!ValueAnimator.areAnimatorsEnabled()) return@setOnExitAnimationListener view.remove()
@@ -187,8 +188,13 @@ class MainActivity : ComponentActivity() {
             ).setDuration(SPLASH_ICON_EXIT_MS)
         }
         parts += pageFade
+        // The mark's own animation plays to its end first, so a fast start never cuts it off into a flash.
+        val markLeft = view.iconAnimationStart?.let { start ->
+            start.toEpochMilli() + (view.iconAnimationDuration?.toMillis() ?: 0L) - System.currentTimeMillis()
+        } ?: 0L
         AnimatorSet().apply {
             playSequentially(parts)
+            startDelay = markLeft.coerceIn(0L, SPLASH_MARK_WAIT_MAX_MS)
             interpolator = PathInterpolator(0.3f, 0f, 0.8f, 0.15f)
             addListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: Animator) = view.remove()
@@ -524,8 +530,9 @@ class MainActivity : ComponentActivity() {
         const val RESTRICTED_SETTINGS_OP = "android:access_restricted_settings"
 
         /** The launch screen's exit (Material 3 emphasized accelerate): the mark goes in 200 ms, then the page in 150. */
-        const val SPLASH_ICON_EXIT_MS = 200L
-        const val SPLASH_PAGE_FADE_MS = 150L
+        const val SPLASH_ICON_EXIT_MS = 320L
+        const val SPLASH_PAGE_FADE_MS = 260L
+        const val SPLASH_MARK_WAIT_MAX_MS = 1_000L
         const val SPLASH_EXIT_SCALE = 1.06f
 
         val PRIVACY_POLICY = "${BuildConfig.SOURCE_URL}/blob/main/PRIVACY.md"
