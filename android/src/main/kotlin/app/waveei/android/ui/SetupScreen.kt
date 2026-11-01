@@ -169,8 +169,8 @@ fun OnboardingScreen(activity: MainActivity, nav: Navigator, at: Int = 0) {
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = GUTTER),
                 ) {
-                    // A step's picture keeps the gutter's distance from the progress bar.
-                    val top = if (place == 0) 0.dp else GUTTER
+                    // A step's picture keeps the gutter's distance from the progress bar, the gap under the bar included.
+                    val top = if (place == 0) 0.dp else STEP_TOP
                     Spacer(Modifier.height(top))
                     Column(
                         Modifier.heightIn(min = height - PROGRESS_HEIGHT - top),
@@ -180,7 +180,7 @@ fun OnboardingScreen(activity: MainActivity, nav: Navigator, at: Int = 0) {
                         when {
                             place == 0 -> StartStep(activity) { step = 1 }
                             // The prompt's picture takes what the step leaves, so the step fits the screen.
-                            place == 1 -> MicStep(activity, state, (height - PROGRESS_HEIGHT - GUTTER - BACK_CLEARANCE - MIC_STEP_TEXT).coerceIn(MIC_PICTURE_MIN, MIC_PICTURE_MAX)) { step = 2 }
+                            place == 1 -> MicStep(activity, state, (height - PROGRESS_HEIGHT - STEP_TOP - BACK_CLEARANCE - MIC_STEP_TEXT).coerceIn(MIC_PICTURE_MIN, MIC_PICTURE_MAX)) { step = 2 }
                             place == 2 -> KeyboardStep(activity, state.keyboard) { step = 3 }
                             place == 3 && screen % 2 == 1 -> ConsentStep(
                                 onAgree = {
@@ -207,6 +207,14 @@ fun OnboardingScreen(activity: MainActivity, nav: Navigator, at: Int = 0) {
             }
         }
         if (step > 0) {
+            // The page under Back, so a step scrolling under it never runs into the label.
+            Box(
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(BACK_BAR)
+                    .background(appColors.page),
+            )
             Text(
                 stringResource(R.string.back),
                 style = type(16f, 24f, Fonts.SEMIBOLD),
@@ -712,7 +720,12 @@ private val SETUP_STEPS = listOf("start", "microphone", "keyboard", "floating do
 private val STEP_SHIFT = 40.dp
 /** The setup's side margin, on the 8 dp grid. */
 private val GUTTER = 24.dp
-private val PROGRESS_HEIGHT = 14.dp
+/** The progress bar's row: 10 dp above the bar, the 4 dp bar, then an 8 dp gap where a scrolled step is cut off. */
+private val PROGRESS_HEIGHT = 22.dp
+/** From the progress row to a step's picture: the gutter, less the gap already in the row. */
+private val STEP_TOP = GUTTER - 8.dp
+/** The on-screen Back: 16 dp from the bottom and its 50 dp touch area. */
+private val BACK_BAR = 66.dp
 /** Under a step: the on-screen Back (16 dp from the bottom, a 50 dp touch area) and a gap above it. */
 private val BACK_CLEARANCE = 80.dp
 /** The Microphone step without its picture, with room for a line more. */
