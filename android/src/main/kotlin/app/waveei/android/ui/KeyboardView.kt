@@ -493,12 +493,13 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         val marked = new.state == Dictation.State.RECORDING || new.state == Dictation.State.PROCESSING
         val wasMarked = old.state == Dictation.State.RECORDING || old.state == Dictation.State.PROCESSING
         if (marked != wasMarked) recMark.jump(if (marked) 1f else 0f)
-        playing.to(if (new.state == Dictation.State.PAUSED) 1f else 0f)
-        busy.to(if (new.state == Dictation.State.PROCESSING) 1f else 0f)
-        playDisc.to(if (new.state == Dictation.State.PAUSED) 1f else 0f)
+        // The trio changes at once: Pause ↔ Play, Retry, the ring into the busy arc.
+        playing.jump(if (new.state == Dictation.State.PAUSED) 1f else 0f)
+        busy.jump(if (new.state == Dictation.State.PROCESSING) 1f else 0f)
+        playDisc.jump(if (new.state == Dictation.State.PAUSED) 1f else 0f)
         val retry = showsRetry(new)
         if (retry && !showsRetry(old)) retryAt = now()
-        retryShown.to(if (retry) 1f else 0f)
+        retryShown.jump(if (retry) 1f else 0f)
         // Pause and × turn live and back at once, with the recording.
         pauseLive.jump(if (new.state.open) 1f else 0f)
         cancelLive.jump(if (cancels(new)) 1f else 0f)
@@ -738,7 +739,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
 
     /** The check badge: 0 → 1.18 → 1 when Auto-send turns on, 1 → 0 when it turns off. */
     private fun badgeScale(): Float {
-        if (still()) return if (model.autoSend) 1f else 0f
+        if (snap()) return if (model.autoSend) 1f else 0f
         val t = (now() - badgeAt).toFloat()
         return if (model.autoSend) {
             val q = EMPHASIZED_DECELERATE.getInterpolation(((t - BADGE_DELAY_MS) / BADGE_IN_MS).coerceIn(0f, 1f))
@@ -1013,8 +1014,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
             recGlow.maskFilter = BlurMaskFilter(REC_GLOW * s, BlurMaskFilter.Blur.NORMAL)
             recCore.maskFilter = BlurMaskFilter(REC_CORE_BLUR * s, BlurMaskFilter.Blur.NORMAL)
         }
-        // Processing: the full ring shrinks to the arc over BUSY_MS while the track comes in; with Remove
-        // animations, a still arc at 12 o'clock.
+        // Processing: the ring is the arc at once, with its track; with Remove animations, a still arc at 12 o'clock.
         val busyNow = busy.value()
         val sweep = lerp(360f, BUSY_ARC, busyNow)
         val start = if (busyNow <= 0f || snap()) -90f - sweep / 2 + BUSY_ARC / 2 else (now() % SPIN_MS) / SPIN_MS.toFloat() * 360f - 90f
@@ -1185,12 +1185,12 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
     private var liveShift = 0f
     private var liveAt = 0L
 
-    private fun liveSlide(): Float = if (still()) 1f else STANDARD.getInterpolation(((now() - liveAt).toFloat() / LIVE_SLIDE_MS).coerceIn(0f, 1f))
+    private fun liveSlide(): Float = if (snap()) 1f else STANDARD.getInterpolation(((now() - liveAt).toFloat() / LIVE_SLIDE_MS).coerceIn(0f, 1f))
 
     /** One item at a time; a change cross-fades: the old one out and up, the new one in from below. */
     private fun drawStatus(canvas: Canvas) {
         val r = rects.getValue(Key.STATUS)
-        val p = if (still()) 1f else ((now() - statusAt).toFloat() / STATUS_FADE_MS).coerceIn(0f, 1f)
+        val p = if (snap()) 1f else ((now() - statusAt).toFloat() / STATUS_FADE_MS).coerceIn(0f, 1f)
         val old = previous?.takeIf { p < 1f }
         if (old != null) layer(canvas, r, (1f - 2 * p).coerceAtLeast(0f), -STATUS_SHIFT * s * p) { drawLook(canvas, old, r) }
         if (old == null) {
@@ -1421,9 +1421,6 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
     /** Screenshots and Remove animations show every transition at its end. */
     private fun snap(): Boolean = frameTimeMs != null || reduceMotion()
 
-    /** Every transition at its end: the keyboard changes at once (see [KeyboardMotion]). */
-    private fun still(): Boolean = snap() || !KeyboardMotion.animates()
-
     /** A value easing to its target over a time, from wherever it was when the target changed. */
     private inner class Tween(private var ms: Long, private var curve: Interpolator = STANDARD, private val delay: Long = 0L) {
         private var from = 0f
@@ -1440,12 +1437,12 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         }
 
         fun value(): Float {
-            if (still()) return target
+            if (snap()) return target
             val p = ((now() - at - delay).toFloat() / ms).coerceIn(0f, 1f)
             return from + (target - from) * curve.getInterpolation(p)
         }
 
-        fun moving(): Boolean = !still() && now() - at < ms + delay
+        fun moving(): Boolean = !snap() && now() - at < ms + delay
 
         /** Straight to [value], no easing. */
         fun jump(value: Float) {
@@ -1455,10 +1452,10 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         }
     }
 
-    private val playing = Tween(PLAY_MS)
-    private val playDisc = Tween(PLAY_DISC_MS, delay = PLAY_DISC_DELAY_MS)
-    private val retryShown = Tween(RETRY_MS, delay = RETRY_DELAY_MS)
     // Set with jump only: no easing.
+    private val playing = Tween(1L)
+    private val playDisc = Tween(1L)
+    private val retryShown = Tween(1L)
     private val pauseLive = Tween(1L)
     private val cancelLive = Tween(1L)
     private val styleOpen = Tween(OPEN_MS)
@@ -1467,7 +1464,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
     private val emojiOpen = Tween(KEY_TINT_MS)
     private val sendOn = Tween(SEND_ON_MS)
     private val pasteRow = Tween(PASTE_IN_MS)
-    private val busy = Tween(BUSY_MS)
+    private val busy = Tween(1L) // Set with jump only.
     private val sendOnceOn = Tween(SEND_ON_MS)
     private val recMark = Tween(1L)
     private val tweens = listOf(playing, playDisc, retryShown, pauseLive, cancelLive, styleOpen, translateOpen, clipboardOpen, emojiOpen, sendOn, sendOnceOn, pasteRow, busy, recMark)
@@ -1512,10 +1509,15 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
             at = if (held) at + MIN_HOLD_MS else t
         }
 
+        // The trio's keys press and let go at once; a quick tap still shows the press for MIN_HOLD_MS.
+        private val instant = key == Key.PAUSE || key == Key.RETRY || key == Key.CANCEL
+
+        private fun held() = down || now() < at
+
         fun scale(): Float {
             val target = pressTarget(key)
-            // At once, and a quick tap still shows the press for MIN_HOLD_MS.
-            if (still()) return if (held()) target else 1f
+            if (snap()) return if (down) target else 1f
+            if (instant) return if (held()) target else 1f
             val t = (now() - at).toFloat()
             return if (down) {
                 scaleFrom + (target - scaleFrom) * STANDARD.getInterpolation((t / PRESS_MS).coerceIn(0f, 1f))
@@ -1528,7 +1530,8 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         }
 
         fun tint(): Float {
-            if (still()) return if (held()) 1f else 0f
+            if (snap()) return if (down) 1f else 0f
+            if (instant) return if (held()) 1f else 0f
             val t = (now() - at).toFloat()
             if (!down && t < 0f) return holdTint + (1f - holdTint) * ((now() - downAt) / PRESS_MS).coerceIn(0f, 1f)
             return if (down) tintFrom + (1f - tintFrom) * (t / PRESS_MS).coerceIn(0f, 1f) else tintFrom * (1f - (t / TINT_OUT_MS).coerceIn(0f, 1f))
@@ -1540,10 +1543,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
             return if (target >= 1f) 0f else ((1f - scale()) / (1f - target)).coerceIn(0f, 1f)
         }
 
-        fun moving(): Boolean =
-            if (still()) !snap() && !down && now() < at else (now() - at).toFloat() < if (down) PRESS_MS else SPRING_MS.toFloat()
-
-        private fun held() = down || now() < at
+        fun moving(): Boolean = !snap() && if (instant) !down && now() < at else (now() - at).toFloat() < if (down) PRESS_MS else SPRING_MS.toFloat()
     }
 
     private val presses = EnumMap<Key, Press>(Key::class.java)
@@ -1572,11 +1572,9 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         return exp(-zeta * w * sec) * (x0 * cos(wd * sec) + zeta * w * x0 / wd * sin(wd * sec))
     }
 
-    // The mic's own press: a spring from 1 to MIC_PRESSED that only says how deep the press is (micDepth); the
-    // ball keeps its size.
+    // The mic's own press: 1 or MIC_PRESSED, at once; it only says how deep the press is (micDepth), the ball keeps
+    // its size.
     private var micScale = 1f
-    private var micVelocity = 0f
-    private var springAt = 0L
 
     private var micDownAt = 0L
 
@@ -1586,28 +1584,14 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         return if (held && model.micEnabled && model.state != Dictation.State.PROCESSING) MIC_PRESSED else 1f
     }
 
-    /** How far the mic is pressed in, 0 at rest to 1 at [MIC_PRESSED]; the spring's overshoot past rest is no press. */
+    /** How far the mic is pressed in, 0 at rest to 1 at [MIC_PRESSED]. */
     private fun micDepth(): Float = ((1f - micScale) / (1f - MIC_PRESSED)).coerceIn(0f, 1f)
 
-    // Frames run through the hold too, so the release starts when it ends.
-    private fun springSettled(): Boolean =
-        abs(micVelocity) < 0.01f && abs(micTarget() - micScale) < 0.001f && now() - micDownAt >= MIC_PRESS_HOLD_MS
+    // Frames run through the hold too, so the release comes when it ends.
+    private fun springSettled(): Boolean = micTarget() == micScale && now() - micDownAt >= MIC_PRESS_HOLD_MS
 
     private fun updateSpring() {
-        val t = now()
-        if (still()) {
-            micScale = micTarget()
-            micVelocity = 0f
-        } else {
-            val dt = (t - springAt).coerceIn(0L, MAX_STEP_MS) / 1000f
-            // In quickly, back slower; both critically damped, so neither bounces.
-            val going = micTarget() < 1f
-            val stiffness = if (going) MIC_SPRING_IN_STIFFNESS else MIC_SPRING_STIFFNESS
-            val damping = if (going) MIC_SPRING_IN_DAMPING else MIC_SPRING_DAMPING
-            micVelocity += (stiffness * (micTarget() - micScale) - damping * micVelocity) * dt
-            micScale += micVelocity * dt
-        }
-        springAt = t
+        micScale = micTarget()
     }
 
     // The water
@@ -1681,7 +1665,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
                 backRise = 0f
             }
         }
-        val k = if (still()) 1f else STANDARD.getInterpolation(((t - waterAt).toFloat() / waterMs).coerceIn(0f, 1f))
+        val k = if (snap()) 1f else STANDARD.getInterpolation(((t - waterAt).toFloat() / waterMs).coerceIn(0f, 1f))
         fillNow = lerp(waterFrom[0], fill, k)
         crestNow = lerp(waterFrom[1], crest, k)
         backCrestNow = lerp(waterFrom[2], backCrest, k)
@@ -1723,9 +1707,9 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         if (snap()) return false
         val t = now()
         if (tweens.any { it.moving() } || presses.values.any { it.moving() } || !springSettled()) return true
-        if (!still() && (t - statusAt < STATUS_FADE_MS || t - liveAt < LIVE_SLIDE_MS || t - waterAt < waterMs)) return true
+        if (t - statusAt < STATUS_FADE_MS || t - liveAt < LIVE_SLIDE_MS || t - waterAt < waterMs) return true
         if (t - landedAt < LANDED_MS || t - retryAt < RETRY_RING_FROM_MS + RETRY_RING_MS) return true
-        if (!still() && t - badgeAt < BADGE_DELAY_MS + BADGE_IN_MS) return true
+        if (t - badgeAt < BADGE_DELAY_MS + BADGE_IN_MS) return true
         if (panelOpen()) return false
         return model.state == Dictation.State.RECORDING || model.state == Dictation.State.PROCESSING
     }
@@ -2026,7 +2010,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
     private fun springBack(panel: View) {
         panelAnimator?.cancel()
         val from = panel.translationY
-        if (still() || from == 0f) {
+        if (reduceMotion() || from == 0f) {
             panel.translationY = 0f
             return
         }
@@ -2422,11 +2406,6 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         const val MIC_PRESS_SHADE = 0xFF0A2A66.toInt()
         const val MIC_PRESS_SHADE_ALPHA = 0.22f
         const val MIC_PRESS_SHADE_NIGHT_ALPHA = 0.3f
-        // Critically damped: in about 100 ms, back in about 250 ms, without a bounce.
-        const val MIC_SPRING_IN_STIFFNESS = 1600f
-        const val MIC_SPRING_IN_DAMPING = 80f
-        const val MIC_SPRING_STIFFNESS = 600f
-        const val MIC_SPRING_DAMPING = 49f
         const val LANDED_RING = 0xFF8CC8FF.toInt()
         const val LANDED_START = 44f
         const val LANDED_END = 60f
@@ -2443,7 +2422,6 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         const val PAUSED_FILL = 0.42f
         const val PAUSED_CREST = 0.3f
         const val BUSY_CREST = 0.5f
-        const val BUSY_MS = 220L
         const val BUSY_SATURATION = 0.45f
         /** Loud speech lifts the water by up to this share: 0.34 → 0.86. */
         const val LISTEN_FILL_RANGE = 0.52f
@@ -2493,11 +2471,6 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         const val PRESS_SHADE_DAY_ALPHA = 0.12f
         const val PRESS_SHADE_NIGHT = 0xFF000000.toInt()
         const val PRESS_SHADE_NIGHT_ALPHA = 0.3f
-        const val PLAY_MS = 240L
-        const val PLAY_DISC_MS = 220L
-        const val PLAY_DISC_DELAY_MS = 40L
-        const val RETRY_MS = 260L
-        const val RETRY_DELAY_MS = 60L
         const val OPEN_MS = 180L
         const val CLOSE_MS = 120L
         const val KEY_TINT_MS = 120L

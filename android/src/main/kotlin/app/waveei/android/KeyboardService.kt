@@ -39,7 +39,6 @@ import android.widget.FrameLayout
 import androidx.core.content.FileProvider
 import app.waveei.android.ui.EmojiPanel
 import app.waveei.android.ui.KeyboardColors
-import app.waveei.android.ui.KeyboardMotion
 import app.waveei.android.ui.KeyboardView
 import app.waveei.android.ui.ListCard
 import app.waveei.android.ui.ListPanel
@@ -265,7 +264,7 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         main.postDelayed(showIfHidden, SHOW_CHECK_MS)
     }
 
-    /** The system slides the keyboard in; the keys come with it, at once. */
+    /** The system slides the keyboard in; the keys rise and fade in a little behind it, so it comes up softer. */
     override fun onWindowShown() {
         super.onWindowShown()
         windowShown = true
@@ -273,7 +272,6 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         if (!::keyboard.isInitialized) return
         val panel = keyboard.parent as? View ?: return
         settle(panel)
-        if (!KeyboardMotion.animates()) return
         panel.alpha = 0f
         panel.translationY = RISE_DP * resources.displayMetrics.density
         panel.animate().alpha(1f).translationY(0f).setDuration(RISE_MS).setInterpolator(android.view.animation.DecelerateInterpolator()).start()

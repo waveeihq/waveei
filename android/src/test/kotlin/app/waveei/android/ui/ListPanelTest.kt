@@ -8,7 +8,7 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import app.waveei.android.R
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -20,7 +20,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import java.time.Duration
 
-/** The Clipboard | History panel: delete, clear, insert and a tab change happen at once, as all of the keyboard does. */
+/** The Clipboard | History panel's motion: delete, clear and insert wait for their animation. */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [36], qualifiers = "w411dp-h891dp-xxhdpi")
@@ -58,19 +58,27 @@ class ListPanelTest {
     private fun labelled(text: String) = all().filter { it is TextView && it.text.toString() == text }
 
     @Test
-    fun deleteRunsAtOnce() {
-        described(activity.getString(R.string.delete)).first().performClick()
-        assertEquals(listOf("delete a"), calls)
+    fun deleteRunsOnceTheRowHasFolded() {
+        val bin = described(activity.getString(R.string.delete)).first()
+        val row = bin.parent as View
+        bin.performClick()
+        bin.performClick()
+        assertTrue("the row folds first", calls.isEmpty())
+        idle(1_000)
+        assertEquals("deleted once, folded", listOf("delete a"), calls)
+        assertEquals(0, row.height)
     }
 
     @Test
-    fun clearRunsAtOnceOnTheSecondTap() {
+    fun clearWaitsForTheRowsToFade() {
         val clear = described(activity.getString(R.string.clear)).single()
         clear.performClick()
         idle(500)
         assertEquals(activity.getString(R.string.tap_again_to_clear), clear.contentDescription)
         assertTrue("the pill grew", clear.width > (100 * unit).toInt())
         clear.performClick()
+        assertTrue("the rows fade first", calls.isEmpty())
+        idle(1_000)
         assertEquals(listOf("clear"), calls)
     }
 
@@ -86,19 +94,27 @@ class ListPanelTest {
     }
 
     @Test
-    fun insertGoesInAndClosesAtOnce() {
-        labelled("Insert").first().performClick()
+    fun insertGoesInAfterThePressAndTheCloseWaits() {
+        val insert = labelled("Insert").first()
+        insert.performClick()
+        assertTrue("not at once", calls.isEmpty())
+        idle(100)
         assertEquals(listOf("insert a"), calls)
-        assertEquals(0L, panel.closeDelayMs)
         panel.close { calls += "closed" }
+        assertTrue("the close waits for the pill's release", panel.closeDelayMs in 1..60)
+        idle(1_000)
         assertEquals(listOf("insert a", "closed"), calls)
     }
 
     @Test
-    fun anotherTabShowsItsListAtOnce() {
+    fun anotherTabSlidesTheListsIn() {
         panel.show(ListPanel.Tab.HISTORY, listOf(row("c")), "empty", {}, {}, KeyboardColors.DAY, unit, false)
         val text = labelled("c").single()
-        val moved = generateSequence(text as View) { it.parent as? View }.firstOrNull { it.alpha < 1f || it.translationX != 0f }
-        assertNull("in place, no slide", moved)
+        // The new list starts away and see-through, then lands.
+        val card = generateSequence(text as View) { it.parent as? View }.firstOrNull { it.alpha < 1f || it.translationX != 0f }
+        assertNotNull("it slides in", card)
+        idle(1_000)
+        assertEquals(1f, card!!.alpha)
+        assertEquals(0f, card.translationX)
     }
 }

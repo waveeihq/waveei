@@ -171,7 +171,7 @@ class ListPanel(context: Context) : FrameLayout(context) {
     ) {
         val was = this.tab
         val sameTab = was == tab
-        val slide = was != null && !sameTab && isShown && KeyboardMotion.animates()
+        val slide = was != null && !sameTab && isShown && ValueAnimator.areAnimatorsEnabled()
         // History is to the right of Clipboard: going there, the old list leaves to the left.
         val direction = if (tab == Tab.HISTORY) -1f else 1f
         if (slide) leave(direction)
@@ -282,7 +282,7 @@ class ListPanel(context: Context) : FrameLayout(context) {
         val list = if (rows.isEmpty()) this.empty else card
         when {
             slide -> arrive(list, direction)
-            rebuilding && KeyboardMotion.animates() -> {
+            rebuilding && ValueAnimator.areAnimatorsEnabled() -> {
                 // The empty state rises in, 6 dp, once the card has gone.
                 list.alpha = 0f
                 list.translationY = CLEAR_RISE * u
@@ -339,7 +339,7 @@ class ListPanel(context: Context) : FrameLayout(context) {
         removeCallbacks(disarm)
         clearAnimator?.cancel()
         val to = if (armed) 1f else 0f
-        if (!KeyboardMotion.animates() || !isShown) {
+        if (!ValueAnimator.areAnimatorsEnabled() || !isShown) {
             clearShown = to
             applyClear()
         } else {
@@ -378,7 +378,7 @@ class ListPanel(context: Context) : FrameLayout(context) {
     private fun confirmClear() {
         setClear(false, CLEAR_BACK_MS)
         val run = onClear
-        if (!KeyboardMotion.animates() || !isShown || card.visibility != VISIBLE) return finishClear(run)
+        if (!ValueAnimator.areAnimatorsEnabled() || !isShown || card.visibility != VISIBLE) return finishClear(run)
         busy = true
         var shown = 0
         for (i in 0 until rows.childCount) {
@@ -448,7 +448,7 @@ class ListPanel(context: Context) : FrameLayout(context) {
 
     /** The row fades, then folds to nothing with the rows below following; then [delete] runs. */
     private fun removeRow(view: ViewGroup, delete: () -> Unit) {
-        if (!KeyboardMotion.animates() || !view.isShown) return delete()
+        if (!ValueAnimator.areAnimatorsEnabled() || !view.isShown) return delete()
         if (!going.add(view)) return
         // No second tap on a row that is going.
         for (i in 0 until view.childCount) view.getChildAt(i).isEnabled = false
@@ -474,7 +474,7 @@ class ListPanel(context: Context) : FrameLayout(context) {
     /** The Insert pill is released, the text goes in at 80 ms, and the panel's close waits until 140 ms. */
     private fun runMain(action: Action) {
         if (busy) return
-        if (!KeyboardMotion.animates()) return action.run()
+        if (!ValueAnimator.areAnimatorsEnabled()) return action.run()
         busy = true
         closeAt = SystemClock.uptimeMillis() + INSERT_CLOSE_MS
         postDelayed({
@@ -595,10 +595,6 @@ class ListPanel(context: Context) : FrameLayout(context) {
         var fade: ValueAnimator? = null
         fun tintTo(to: Int, ms: Long, curve: TimeInterpolator) {
             fade?.cancel()
-            if (!KeyboardMotion.animates()) {
-                face.alpha = to
-                return
-            }
             fade = ValueAnimator.ofInt(face.alpha, to).apply {
                 duration = ms
                 interpolator = curve
@@ -608,13 +604,7 @@ class ListPanel(context: Context) : FrameLayout(context) {
         }
         val release = Runnable {
             val ms = if (insert) INSERT_RELEASE_MS else KeyPress.SPRING_MS
-            if (KeyboardMotion.animates()) {
-                view.animate().scaleX(1f).scaleY(1f).setStartDelay(0).setDuration(ms).setInterpolator(if (insert) LINEAR else KeyPress.SPRING).start()
-            } else {
-                view.animate().cancel()
-                view.scaleX = 1f
-                view.scaleY = 1f
-            }
+            view.animate().scaleX(1f).scaleY(1f).setStartDelay(0).setDuration(ms).setInterpolator(if (insert) LINEAR else KeyPress.SPRING).start()
             tintTo(0, if (insert) INSERT_RELEASE_MS else KeyPress.TINT_OUT_MS, LINEAR)
         }
         view.setOnTouchListener { v, event ->
@@ -623,13 +613,7 @@ class ListPanel(context: Context) : FrameLayout(context) {
                     downAt = event.eventTime
                     v.removeCallbacks(release)
                     val to = target()
-                    if (KeyboardMotion.animates()) {
-                        v.animate().scaleX(to).scaleY(to).setStartDelay(0).setDuration(KeyPress.PRESS_MS).setInterpolator(STANDARD).start()
-                    } else {
-                        v.animate().cancel()
-                        v.scaleX = to
-                        v.scaleY = to
-                    }
+                    v.animate().scaleX(to).scaleY(to).setStartDelay(0).setDuration(KeyPress.PRESS_MS).setInterpolator(STANDARD).start()
                     tintTo(255, KeyPress.PRESS_MS, STANDARD)
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> if (downAt != 0L) {
@@ -669,11 +653,9 @@ class ListPanel(context: Context) : FrameLayout(context) {
                     closeMenu()
                     item.run()
                 }
-                if (KeyboardMotion.animates()) {
-                    alpha = 0f
-                    translationY = MENU_ITEM_RISE * u
-                    animate().alpha(1f).translationY(0f).setStartDelay(MENU_ITEM_DELAY_MS + MENU_ITEM_STAGGER_MS * i).setDuration(MENU_ITEM_MS).setInterpolator(STANDARD).start()
-                }
+                alpha = 0f
+                translationY = MENU_ITEM_RISE * u
+                animate().alpha(1f).translationY(0f).setStartDelay(MENU_ITEM_DELAY_MS + MENU_ITEM_STAGGER_MS * i).setDuration(MENU_ITEM_MS).setInterpolator(STANDARD).start()
             }, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, (MENU_ITEM * u).toInt()))
         }
         // Where the ⋯ is in the panel, the rows' scroll included.
@@ -693,13 +675,6 @@ class ListPanel(context: Context) : FrameLayout(context) {
         menuLayer.visibility = VISIBLE
         menu.pivotX = (room + width).toFloat()
         menu.pivotY = (if (top >= below) room else room + height).toFloat()
-        menu.animate().cancel()
-        if (!KeyboardMotion.animates()) {
-            menu.alpha = 1f
-            menu.scaleX = 1f
-            menu.scaleY = 1f
-            return
-        }
         menu.alpha = 0f
         menu.scaleX = MENU_FROM
         menu.scaleY = MENU_FROM
@@ -708,11 +683,6 @@ class ListPanel(context: Context) : FrameLayout(context) {
 
     private fun closeMenu() {
         if (menuLayer.visibility != VISIBLE) return
-        if (!KeyboardMotion.animates()) {
-            menu.animate().cancel()
-            menuLayer.visibility = GONE
-            return
-        }
         menu.animate().alpha(0f).scaleX(MENU_TO).scaleY(MENU_TO).setDuration(MENU_CLOSE_MS).setInterpolator(STANDARD_ACCELERATE)
             .withEndAction { menuLayer.visibility = GONE }.start()
     }
@@ -841,7 +811,7 @@ class ListPanel(context: Context) : FrameLayout(context) {
         /** The chip to the first tab (0) or the second (1); [animate]d, it slides over 200 ms, in-out. */
         fun slide(to: Float, animate: Boolean) {
             animator?.cancel()
-            if (!animate || !KeyboardMotion.animates()) {
+            if (!animate || !ValueAnimator.areAnimatorsEnabled()) {
                 thumb = to
                 invalidate()
                 return
@@ -1101,18 +1071,6 @@ class ListCard(context: Context) : FrameLayout(context) {
         fill(list, pinned)
         shown = true
         animate().cancel()
-        if (!KeyboardMotion.animates()) {
-            notchX = target
-            content.animate().cancel()
-            content.alpha = 1f
-            if (!switching) veil.captureLaidOut(behind)
-            visibility = VISIBLE
-            alpha = 1f
-            scaleX = 1f
-            scaleY = 1f
-            invalidate()
-            return
-        }
         if (switching) {
             val from = notchX
             animate().setUpdateListener {
@@ -1177,7 +1135,7 @@ class ListCard(context: Context) : FrameLayout(context) {
         if (!shown) return
         shown = false
         animate().cancel()
-        if (!animated || !KeyboardMotion.animates()) {
+        if (!animated || !android.animation.ValueAnimator.areAnimatorsEnabled()) {
             visibility = GONE
             veil.forget()
             return

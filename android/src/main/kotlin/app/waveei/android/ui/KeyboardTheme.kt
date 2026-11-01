@@ -338,14 +338,6 @@ class Veil(private val owner: View) {
     }
 }
 
-/**
- * The keyboard changes at once: presses, panels, cards, menus and states have no transitions. Only what follows the
- * voice (the water and its waves), the busy spinner and Listening's dots move.
- */
-object KeyboardMotion {
-    fun animates(): Boolean = false
-}
-
 /** The press timings, for the presses the panels draw themselves (KeyboardView has the keys' own). */
 object KeyPress {
     const val PRESS_MS = 50L
@@ -408,8 +400,7 @@ object KeyPress {
         }
 
         fun scale(): Float {
-            // At once, and a quick tap still shows the press for MIN_HOLD_MS.
-            if (snap()) return if (held()) target else 1f
+            if (snap()) return if (down) target else 1f
             val t = (SystemClock.uptimeMillis() - at).toFloat()
             return when {
                 down -> scaleFrom + (target - scaleFrom) * STANDARD.getInterpolation((t / PRESS_MS).coerceIn(0f, 1f))
@@ -420,18 +411,15 @@ object KeyPress {
         }
 
         fun tint(): Float {
-            if (snap()) return if (held()) 1f else 0f
+            if (snap()) return if (down) 1f else 0f
             val t = (SystemClock.uptimeMillis() - at).toFloat()
             if (!down && t < 0f) return holdTint + (1f - holdTint) * ((SystemClock.uptimeMillis() - downAt) / PRESS_MS.toFloat()).coerceIn(0f, 1f)
             return if (down) tintFrom + (1f - tintFrom) * (t / PRESS_MS).coerceIn(0f, 1f) else tintFrom * (1f - (t / TINT_OUT_MS).coerceIn(0f, 1f))
         }
 
-        fun moving(): Boolean =
-            if (snap()) !down && SystemClock.uptimeMillis() < at else SystemClock.uptimeMillis() - at < if (down) PRESS_MS else SPRING_MS
+        fun moving(): Boolean = !snap() && SystemClock.uptimeMillis() - at < if (down) PRESS_MS else SPRING_MS
 
-        private fun held() = down || SystemClock.uptimeMillis() < at
-
-        private fun snap() = !KeyboardMotion.animates()
+        private fun snap() = !ValueAnimator.areAnimatorsEnabled()
     }
 }
 
@@ -453,7 +441,7 @@ class Reveal(private val panel: View, private val shift: (Float) -> Unit) {
 
     private fun run(to: Float, unit: Float, ms: Long, curve: TimeInterpolator, done: (() -> Unit)?) {
         animator?.cancel()
-        if (!KeyboardMotion.animates()) {
+        if (!ValueAnimator.areAnimatorsEnabled()) {
             set(to, unit)
             done?.invoke()
             return
