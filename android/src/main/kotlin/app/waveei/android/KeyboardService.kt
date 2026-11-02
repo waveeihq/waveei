@@ -275,6 +275,10 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         DotService.instance?.keyboardShownOrHidden()
         if (!::keyboard.isInitialized) return
         val panel = keyboard.parent as? View ?: return
+        // Keys left out of place by the last hide would jump back here.
+        if (panel.translationY != 0f || panel.alpha != 1f) {
+            DebugLog.add("keyboard: shown with the keys still ${(panel.translationY / resources.displayMetrics.density).toInt()} dp down, alpha ${"%.2f".format(java.util.Locale.ROOT, panel.alpha)}")
+        }
         settle(panel)
         panel.alpha = 0f
         panel.translationY = RISE_DP * resources.displayMetrics.density

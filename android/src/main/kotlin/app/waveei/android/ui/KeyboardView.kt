@@ -42,6 +42,7 @@ import androidx.core.graphics.PathParser
 import androidx.core.view.ViewCompat
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import androidx.customview.widget.ExploreByTouchHelper
+import app.waveei.android.DebugLog
 import app.waveei.android.Dictation
 import app.waveei.android.R
 import app.waveei.android.Stats
@@ -2003,6 +2004,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
     }
 
     private fun hide(panel: View) {
+        DebugLog.add("keyboard: hidden by the grabber, pulled ${(panel.translationY / resources.displayMetrics.density).toInt()} dp")
         actions.onHide()
         // The service puts the panel back when the window hides; if it did not hide, the keys come back here.
         postDelayed({ if (panel.translationY != 0f && isShown) springBack(panel) }, HIDE_CHECK_MS)
@@ -2249,8 +2251,8 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         // over its bottom, which lifts them off the navigation bar (the top row 36 dp,
         // the six side keys 48 dp, the corners 32 dp as Material's extra-large-increased shape).
         const val WIDE = 411f
-        const val TALL = 304f
-        const val GRAB = 16f
+        const val TALL = 308f
+        const val GRAB = 20f
         const val AXIS = 205.5f
         val COLUMNS = floatArrayOf(43f, 124.25f, 205.5f, 286.75f, 368f)
         val ROWS = listOf(29f, 91f, 167.75f, 244.5f)
@@ -2281,7 +2283,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         const val HAIRLINE = 1f
         const val GRAB_WIDTH = 72f
         const val GRAB_HEIGHT = 5f
-        const val GRAB_TOP = 5.5f
+        const val GRAB_TOP = 9.5f
         const val GRAB_TOUCH_WIDTH = 120f
         /** The middle share of the top edge a pull starts from. */
         const val GRAB_ZONE = 0.5f
