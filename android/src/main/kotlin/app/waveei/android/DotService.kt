@@ -865,7 +865,7 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
     private fun switchTo(id: String): Boolean = runCatching { softKeyboardController.switchToInputMethod(id) }.getOrDefault(false)
 
     /**
-     * Back in an app on the list (KeyboardService.returnTo), within its 5 minutes: our keyboard again. The app is the
+     * Back in an app on the list (KeyboardService.returnTo), within its 2 minutes: our keyboard again. The app is the
      * one whose window just came to the front ([shown], from the event), else the one with the focused field or the
      * active window, which right after a switch of apps may still be the one left. Each app looked at is logged once.
      */

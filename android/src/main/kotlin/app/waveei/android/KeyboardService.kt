@@ -582,7 +582,7 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
 
     /**
      * The person left the app this keyboard was opened in; a running dictation keeps it until the next app.
-     * Back in that app within [RETURN_MS] (5 minutes), the dot service brings this keyboard back; each app on its own.
+     * Back in that app within [RETURN_MS] (2 minutes), the dot service brings this keyboard back; each app on its own.
      */
     private fun leaveSession() {
         if (Dictation.state != Dictation.State.IDLE) return
@@ -1392,7 +1392,7 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         private const val LEAVE_MS = 1_000L
 
         /** How long this keyboard comes back to an app it was left in. */
-        private const val RETURN_MS = 5 * 60_000L
+        private const val RETURN_MS = 2 * 60_000L
 
         /** The apps this keyboard was left in, each with the time (uptime) until it comes back there. Main thread only. */
         val returnTo = HashMap<String, Long>()
