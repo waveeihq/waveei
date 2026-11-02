@@ -1005,7 +1005,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
      */
     private fun drawRecMark(canvas: Canvas) {
         val shown = recMark.value()
-        if (shown <= 0f) return
+        if (shown <= 0f || now() < markFrom) return
         val c = colors
         val color = c.rec
         val alpha = shown
@@ -1580,6 +1580,8 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
     private var micScale = 1f
 
     private var micDownAt = 0L
+    /** The recording ring started from a touch shows from this time on. */
+    private var markFrom = 0L
 
     // A quick tap still shows the whole press: it holds at least MIC_PRESS_HOLD_MS.
     private fun micTarget(): Float {
@@ -1712,7 +1714,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         if (tweens.any { it.moving() } || presses.values.any { it.moving() } || !springSettled()) return true
         if (t - statusAt < STATUS_FADE_MS || t - liveAt < LIVE_SLIDE_MS || t - waterAt < waterMs) return true
         if (t - landedAt < LANDED_MS || t - retryAt < RETRY_RING_FROM_MS + RETRY_RING_MS) return true
-        if (t - badgeAt < BADGE_DELAY_MS + BADGE_IN_MS) return true
+        if (t - badgeAt < BADGE_DELAY_MS + BADGE_IN_MS || t < markFrom) return true
         if (panelOpen()) return false
         return model.state == Dictation.State.RECORDING || model.state == Dictation.State.PROCESSING
     }
@@ -1800,17 +1802,20 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
                 press(key, true)
                 performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
                 when (key) {
-                    // Capture starts on touch-down. The recording ring is drawn first, in this frame: opening the mic
-                    // can hold the main thread for a moment, and the ring must not wait for it; Pause and × go live
-                    // with it. A start that fails leaves the model idle, and they go back.
+                    // Capture starts on touch-down, and Pause and × go live in this frame; the recording ring shows a
+                    // moment later, once the press has been seen (MIC_PRESS_HOLD_MS). Opening the mic can hold the main
+                    // thread for a moment, so all is set before it. A start that fails leaves the model idle, and they
+                    // go back.
                     Key.MIC -> {
                         micDownAt = now()
                         startedOnDown = model.state == Dictation.State.IDLE && model.micEnabled
                         if (startedOnDown) {
+                            markFrom = micDownAt + MIC_PRESS_HOLD_MS
                             recMark.jump(1f)
                             pauseLive.jump(1f)
                             cancelLive.jump(1f)
                             invalidate()
+                            postInvalidateDelayed(MIC_PRESS_HOLD_MS)
                             // After this frame is drawn; a panel not on screen draws nothing, so it starts at once.
                             if (isAttachedToWindow) postOnAnimation { post(::startMic) } else startMic()
                         }
