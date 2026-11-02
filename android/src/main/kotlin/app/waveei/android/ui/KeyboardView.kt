@@ -2391,16 +2391,16 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         const val DIM_LIFT = 0.45f
         /**
          * The recording mark, a hybrid of a halo and a ring, 6 dp off the ball so it does not hug it. The core, 4.5 dp
-         * wide, is softened by a 2.8 dp blur at 69 %; the same stroke blurred by 11 dp at 60 % is the glow.
+         * wide, is softened by a 2.2 dp blur at 69 %; the same stroke blurred by 9 dp at 60 % is the glow.
          */
         const val REC_GAP = 6f
         /** The ring of a recording started by a touch shows this long after it. */
         const val REC_DELAY_MS = 50L
         const val REC_CORE = 3f
         const val REC_WIDTH = 4.5f
-        const val REC_CORE_BLUR = 2.8f
+        const val REC_CORE_BLUR = 2.2f
         const val REC_CORE_ALPHA = 0.69f
-        const val REC_GLOW = 11f
+        const val REC_GLOW = 9f
         const val REC_GLOW_ALPHA = 0.6f
         /** Processing: a 90° arc on a 16 % track of the same colour, a turn per SPIN_MS. */
         const val BUSY_ARC = 90f
