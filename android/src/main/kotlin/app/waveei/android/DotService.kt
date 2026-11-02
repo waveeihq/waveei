@@ -185,7 +185,9 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
         // Back in the app a finished dictation was made in: it goes into the field there, whichever keyboard is up.
         Dictation.deliverWaiting()
         if (event.eventType == AccessibilityEvent.TYPE_WINDOWS_CHANGED || event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
-            if (prefs.floatingOn) returnToApp(event.packageName?.toString().takeIf { event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED })
+            // The keyboard's own return to the app it was left in: not one of the floating icons, so their switch does
+            // not stop it.
+            returnToApp(event.packageName?.toString().takeIf { event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED })
             checkKeyboards()
             // A rising keyboard's window may join the list only after the event: looked at once more a moment later.
             main.removeCallbacks(recheckKeyboards)
