@@ -2390,18 +2390,18 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         /** The mic off: no colour, and this share of [KeyboardColors.micOff] over it; fully opaque. */
         const val DIM_LIFT = 0.45f
         /**
-         * The recording mark, a hybrid of a halo and a ring, 7 dp off the ball so it does not hug it. The core, 4.5 dp
-         * wide, is softened by a 3.75 dp blur at 63 %; the same stroke blurred by 14 dp at 55 % is the glow.
+         * The recording mark, a hybrid of a halo and a ring, 6 dp off the ball so it does not hug it. The core, 4.5 dp
+         * wide, is softened by a 3.4 dp blur at 69 %; the same stroke blurred by 13 dp at 60 % is the glow.
          */
-        const val REC_GAP = 7f
+        const val REC_GAP = 6f
         /** The ring of a recording started by a touch shows this long after it. */
         const val REC_DELAY_MS = 50L
         const val REC_CORE = 3f
         const val REC_WIDTH = 4.5f
-        const val REC_CORE_BLUR = 3.75f
-        const val REC_CORE_ALPHA = 0.63f
-        const val REC_GLOW = 14f
-        const val REC_GLOW_ALPHA = 0.55f
+        const val REC_CORE_BLUR = 3.4f
+        const val REC_CORE_ALPHA = 0.69f
+        const val REC_GLOW = 13f
+        const val REC_GLOW_ALPHA = 0.6f
         /** Processing: a 90° arc on a 16 % track of the same colour, a turn per SPIN_MS. */
         const val BUSY_ARC = 90f
         const val BUSY_TRACK = 0.16f
