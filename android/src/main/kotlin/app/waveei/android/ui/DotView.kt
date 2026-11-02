@@ -412,10 +412,10 @@ class DotView(context: Context, private val actions: Actions) : View(context) {
         val centre = dotCentre()
         shownBubble?.let { drawBubble(canvas, it, iconLeft() + slot / 2, centre.y) }
         if (present > 0f) {
-            // A recording dot softly fades in and out, its ring with it, so a recording is never forgotten, also under a
-            // finger; a muted one greys, never turns see-through.
+            // A recording dot's ring softly fades in and out, so a recording is never forgotten, also under a finger; the
+            // dot itself stays solid. A muted one greys, never turns see-through.
             val pulse = if (leaver != null) leftPulse else if (mode == Mode.RECORDING && !still) pulse() else 1f
-            val alpha = (if (touching || held) 1f else drawn) * present * leaving * pulse
+            val alpha = (if (touching || held) 1f else drawn) * present * leaving
             // Drawn through a layer of its own, so the transparency shows however Android treats the window.
             val layer = if (alpha < 1f) canvas.saveLayerAlpha(0f, 0f, width.toFloat(), height.toFloat(), (alpha * 255).toInt()) else null
             // While a dictation is processing the dot breathes slowly: alive, never blinking.
@@ -432,7 +432,7 @@ class DotView(context: Context, private val actions: Actions) : View(context) {
                 val greyed = grey?.let { canvas.saveLayer(0f, 0f, width.toFloat(), height.toFloat(), it) }
                 drawRecord(canvas, centre.x, centre.y, r)
                 greyed?.let(canvas::restoreToCount)
-                if (mode == Mode.RECORDING || mode == Mode.PROCESSING) drawRecMark(canvas, centre.x, centre.y, r, still)
+                if (mode == Mode.RECORDING || mode == Mode.PROCESSING) drawRecMark(canvas, centre.x, centre.y, r, still, pulse)
             }
             layer?.let(canvas::restoreToCount)
         }
@@ -446,14 +446,14 @@ class DotView(context: Context, private val actions: Actions) : View(context) {
      * glow at 65 %, the core #0E70F4. Processing, a 90° arc on an 18 % track turns once per 1.1 s;
      * still with Remove animations, at 12 o'clock.
      */
-    private fun drawRecMark(canvas: Canvas, cx: Float, cy: Float, r: Float, still: Boolean) {
+    private fun drawRecMark(canvas: Canvas, cx: Float, cy: Float, r: Float, still: Boolean, pulse: Float) {
         val radius = r + dp(REC_GAP) + dp(REC_CORE) / 2
         tmp.set(cx - radius, cy - radius, cx + radius, cy + radius)
         recCore.strokeWidth = dp(REC_WIDTH)
         recGlow.strokeWidth = dp(REC_WIDTH)
-        recGlow.color = Palette.alpha(DotColors.RING, REC_GLOW_ALPHA)
+        recGlow.color = Palette.alpha(DotColors.RING, REC_GLOW_ALPHA * pulse)
         if (mode == Mode.RECORDING) {
-            recCore.alpha = (REC_CORE_ALPHA * 255).toInt()
+            recCore.alpha = (REC_CORE_ALPHA * pulse * 255).toInt()
             canvas.drawOval(tmp, recGlow)
             canvas.drawOval(tmp, recCore)
             return
@@ -682,7 +682,7 @@ class DotView(context: Context, private val actions: Actions) : View(context) {
     }
 
     /** A slow, small swell of the dot's size. */
-    /** The recording dot's opacity: a slow, gentle fade between full and [PULSE_DEPTH] lighter. */
+    /** The recording ring's opacity: a slow, gentle fade between full and [PULSE_DEPTH] lighter. */
     private fun pulse(): Float {
         val phase = (SystemClock.uptimeMillis() % PULSE_MS) / PULSE_MS.toFloat() * 2 * Math.PI
         return 1f - PULSE_DEPTH * (0.5f - 0.5f * cos(phase).toFloat())
@@ -996,7 +996,7 @@ class DotView(context: Context, private val actions: Actions) : View(context) {
         /** A greyed-out record dot, as the keyboard draws its mic: no colour, 45 % white over it, opaque. */
         const val MUTED_LIFT = 0.45f
         const val OPAQUE = 0xFF000000.toInt()
-        /** The recording dot's pulse: its period and how much lighter it gets. */
+        /** The recording ring's pulse: its period and how much lighter it gets. */
         const val PULSE_MS = 1600L
         const val PULSE_DEPTH = 0.45f
         const val BREATH_MS = 1_800L
