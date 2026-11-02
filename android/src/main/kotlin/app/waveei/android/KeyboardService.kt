@@ -26,6 +26,7 @@ import android.text.InputType
 import android.text.format.DateFormat
 import android.graphics.RectF
 import android.view.KeyEvent
+import android.animation.ObjectAnimator
 import android.view.View
 import android.view.WindowInsetsController
 import android.view.WindowManager
@@ -264,7 +265,10 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         main.postDelayed(showIfHidden, SHOW_CHECK_MS)
     }
 
-    /** The system slides the keyboard in; the keys rise and fade in a little behind it, so it comes up softer. */
+    /**
+     * The system slides the keyboard's window in at its own speed; the keys inside show at once and keep rising behind
+     * it, so the keyboard comes up slower and softer.
+     */
     override fun onWindowShown() {
         super.onWindowShown()
         windowShown = true
@@ -274,12 +278,15 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         settle(panel)
         panel.alpha = 0f
         panel.translationY = RISE_DP * resources.displayMetrics.density
-        panel.animate().alpha(1f).translationY(0f).setDuration(RISE_MS).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+        panel.animate().translationY(0f).setDuration(RISE_MS).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+        fadeIn = ObjectAnimator.ofFloat(panel, View.ALPHA, 0f, 1f).setDuration(FADE_MS).apply { start() }
         // A rise that stalls (the window not drawing yet) still ends with the keys in place.
         main.postDelayed(settleRise, RISE_MS + RISE_SETTLE_MS)
     }
 
-    private val settleRise = Runnable { (keyboard.parent as? View)?.takeIf { it.alpha < 1f }?.let(::settle) }
+    private var fadeIn: ObjectAnimator? = null
+
+    private val settleRise = Runnable { (keyboard.parent as? View)?.takeIf { it.alpha < 1f || it.translationY != 0f }?.let(::settle) }
 
     override fun onWindowHidden() {
         super.onWindowHidden()
@@ -291,6 +298,8 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
     /** The keys where they end up: a rise left unfinished never keeps them invisible. */
     private fun settle(panel: View) {
         main.removeCallbacks(settleRise)
+        fadeIn?.cancel()
+        fadeIn = null
         panel.animate().cancel()
         panel.alpha = 1f
         panel.translationY = 0f
@@ -1366,8 +1375,11 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         /** How far below its place the keyboard's content starts rising as the keyboard comes up. */
         private const val RISE_DP = 24f
 
-        /** How long the keys take to rise and fade in as the keyboard comes up: the alpha's soft rise. */
-        private const val RISE_MS = 380L
+        /** How long the keys take to rise as the keyboard comes up. */
+        private const val RISE_MS = 600L
+
+        /** How long they take to fade in: quicker than the rise, so the keyboard never stands empty. */
+        private const val FADE_MS = 150L
 
         /** How long after its planned end a stalled rise is put right. */
         private const val RISE_SETTLE_MS = 150L
