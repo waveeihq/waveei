@@ -1804,19 +1804,19 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
                 performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
                 when (key) {
                     // Capture starts on touch-down, and Pause and × go live in this frame; the recording ring shows a
-                    // moment later, once the press has been seen (MIC_PRESS_HOLD_MS). Opening the mic can hold the main
+                    // moment later, just after the press (REC_DELAY_MS). Opening the mic can hold the main
                     // thread for a moment, so all is set before it. A start that fails leaves the model idle, and they
                     // go back.
                     Key.MIC -> {
                         micDownAt = now()
                         startedOnDown = model.state == Dictation.State.IDLE && model.micEnabled
                         if (startedOnDown) {
-                            markFrom = micDownAt + MIC_PRESS_HOLD_MS
+                            markFrom = micDownAt + REC_DELAY_MS
                             recMark.jump(1f)
                             pauseLive.jump(1f)
                             cancelLive.jump(1f)
                             invalidate()
-                            postInvalidateDelayed(MIC_PRESS_HOLD_MS)
+                            postInvalidateDelayed(REC_DELAY_MS)
                             // After this frame is drawn; a panel not on screen draws nothing, so it starts at once.
                             if (isAttachedToWindow) postOnAnimation { post(::startMic) } else startMic()
                         }
@@ -2390,18 +2390,18 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         /** The mic off: no colour, and this share of [KeyboardColors.micOff] over it; fully opaque. */
         const val DIM_LIFT = 0.45f
         /**
-         * The recording mark, a hybrid of a halo and a ring. M3's focus ring (a 600 ms grow-and-settle split 25/75 %)
-         * sets its motion; it sits 3 dp off the ball, so it does not hug it. The core, 4.5 dp wide, is softened by a
-         * 3 dp blur at 75 %; the same stroke blurred by 12 dp at 65 % is the glow, faint by the time it reaches
-         * Pause/Cancel (59 dp from the centre) and the space bar (55.75 dp).
+         * The recording mark, a hybrid of a halo and a ring, 7 dp off the ball so it does not hug it. The core, 4.5 dp
+         * wide, is softened by a 3.75 dp blur at 63 %; the same stroke blurred by 14 dp at 55 % is the glow.
          */
-        const val REC_GAP = 3f
+        const val REC_GAP = 7f
+        /** The ring of a recording started by a touch shows this long after it. */
+        const val REC_DELAY_MS = 50L
         const val REC_CORE = 3f
         const val REC_WIDTH = 4.5f
-        const val REC_CORE_BLUR = 3f
-        const val REC_CORE_ALPHA = 0.75f
-        const val REC_GLOW = 12f
-        const val REC_GLOW_ALPHA = 0.65f
+        const val REC_CORE_BLUR = 3.75f
+        const val REC_CORE_ALPHA = 0.63f
+        const val REC_GLOW = 14f
+        const val REC_GLOW_ALPHA = 0.55f
         /** Processing: a 90° arc on a 16 % track of the same colour, a turn per SPIN_MS. */
         const val BUSY_ARC = 90f
         const val BUSY_TRACK = 0.16f
