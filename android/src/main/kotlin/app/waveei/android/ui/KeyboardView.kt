@@ -2276,10 +2276,10 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         const val CARD_HEIGHT = 188f
         const val CORNER = 40f
         const val TOP_LINE = 0.5f
-        /** The panel's shadow up over the app (0 -2 10 in CSS: σ 5), and the room above the panel it needs, in dp. */
-        const val TOP_SHADOW_BLUR = 5f
-        const val TOP_SHADOW_DY = 2f
-        const val TOP_ROOM = 16f
+        /** The panel's shadow up over the app (0 -1 5 in CSS: σ 2.5), and the room above the panel it needs, in dp. */
+        const val TOP_SHADOW_BLUR = 2.5f
+        const val TOP_SHADOW_DY = 1f
+        const val TOP_ROOM = 8f
         const val HAIRLINE = 1f
         const val GRAB_WIDTH = 72f
         const val GRAB_HEIGHT = 5f
