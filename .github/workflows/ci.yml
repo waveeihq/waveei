@@ -103,6 +103,11 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          sparse-checkout: CHANGELOG.md
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: android-release
@@ -113,12 +118,14 @@ jobs:
           GH_REPO: ${{ github.repository }}
           VERSION_CODE: ${{ needs.build.outputs.version }}
           VERSION_NAME: ${{ needs.build.outputs.name }}
-        # The tag stays build-<code>: installed builds read the code from it. The title is the version people see.
+        # The tag stays build-<code>: installed builds read the code from it. The title is the version people see. The
+        # notes are this version's part of CHANGELOG.md, with GitHub's link to the commits below.
         run: |
           file="waveei-$VERSION_NAME.apk"
           cp "$(find apk -name 'android-release.apk' | head -1)" "$file"
+          notes=$(awk -v v="## $VERSION_NAME" '$0 == v { on = 1; next } /^## / { on = 0 } on' CHANGELOG.md | sed '/./,$!d')
           gh release create "build-$VERSION_CODE" "$file" \
-            --title "$VERSION_NAME" --generate-notes --target "$GITHUB_SHA" --latest
+            --title "$VERSION_NAME" --notes "$notes" --generate-notes --target "$GITHUB_SHA" --latest
 
   # Each published build starts the developer build of the same commit in the private dev repository. DEV_TOKEN may
   # only start that repository's workflows; without it nothing starts.
