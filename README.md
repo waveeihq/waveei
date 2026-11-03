@@ -20,6 +20,10 @@ Cross-platform by design. Now on Android.
 
 <br>
 
+<a href="https://waveeihq.github.io/waveei/#promo"><img src=".github/assets/promo.jpg" width="100%" alt="Watch the Waveei video, 19 seconds with sound."></a>
+
+<br>
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset=".github/assets/demo-dark.png">
   <img src=".github/assets/demo.png" width="100%" alt="Say it messy, get it clean. You say: so um tell Ana the table's booked, uh, for seven, no wait, for six, by the window. It types: Tell Ana the table's booked for six, by the window.">
