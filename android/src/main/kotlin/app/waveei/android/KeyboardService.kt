@@ -275,10 +275,7 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         DotService.instance?.keyboardShownOrHidden()
         if (!::keyboard.isInitialized) return
         val panel = keyboard.parent as? View ?: return
-        // Keys left out of place by the last hide would jump back here.
-        if (panel.translationY != 0f || panel.alpha != 1f) {
-            DebugLog.add("keyboard: shown with the keys still ${(panel.translationY / resources.displayMetrics.density).toInt()} dp down, alpha ${"%.2f".format(java.util.Locale.ROOT, panel.alpha)}")
-        }
+        // Keys left down by the grabber's hide come back to their place here, out of sight, before they rise.
         settle(panel)
         panel.alpha = 0f
         panel.translationY = RISE_DP * resources.displayMetrics.density
@@ -296,15 +293,22 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         super.onWindowHidden()
         windowShown = false
         DotService.instance?.keyboardShownOrHidden()
-        if (::keyboard.isInitialized) (keyboard.parent as? View)?.let(::settle)
+        // Android calls this as the window starts to slide out, not once it is gone (InputMethodService.hideWindow), so
+        // the keys stay where they are: put back now, keys pulled down by the grabber would jump up on their way out.
+        if (::keyboard.isInitialized) (keyboard.parent as? View)?.let(::stopRise)
     }
 
-    /** The keys where they end up: a rise left unfinished never keeps them invisible. */
-    private fun settle(panel: View) {
+    /** The rise stopped where it is, the keys left in place. */
+    private fun stopRise(panel: View) {
         main.removeCallbacks(settleRise)
         fadeIn?.cancel()
         fadeIn = null
         panel.animate().cancel()
+    }
+
+    /** The keys where they end up: a rise left unfinished never keeps them invisible. */
+    private fun settle(panel: View) {
+        stopRise(panel)
         panel.alpha = 1f
         panel.translationY = 0f
     }

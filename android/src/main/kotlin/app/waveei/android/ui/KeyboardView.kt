@@ -1958,6 +1958,8 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
     override fun onWindowVisibilityChanged(visibility: Int) {
         super.onWindowVisibilityChanged(visibility)
         if (visibility == VISIBLE) return
+        // Hidden after all: the check for a hide that did not happen would pull a keyboard shown again within it.
+        removeCallbacks(hideCheck)
         if (dragging) endDrag(cancelled = true) else endGrab()
     }
 
@@ -2006,9 +2008,11 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
     private fun hide(panel: View) {
         DebugLog.add("keyboard: hidden by the grabber, pulled ${(panel.translationY / resources.displayMetrics.density).toInt()} dp")
         actions.onHide()
-        // The service puts the panel back when the window hides; if it did not hide, the keys come back here.
-        postDelayed({ if (panel.translationY != 0f && isShown) springBack(panel) }, HIDE_CHECK_MS)
+        // The service puts the panel back when the window shows again; if it did not hide, the keys come back here.
+        postDelayed(hideCheck, HIDE_CHECK_MS)
     }
+
+    private val hideCheck = Runnable { panel().takeIf { it.translationY != 0f && isShown }?.let(::springBack) }
 
     /** Caught on its way home and let go without a drag: it goes on home. */
     private fun homeIfCaught() {
