@@ -6,6 +6,7 @@ What changed in each version, as people see it. Each version's part becomes the 
 
 - × on a paused dictation keeps it in History instead of throwing it away; from its ⋯ there, Continue recording records on into it.
 - Show original sits in every dictation's ⋯ in History, greyed where nothing was changed from what you said, instead of showing on some rows only.
+- While a dictation is processed, the water in the mic and in the floating dot freezes where it was instead of sinking.
 
 ## 1.2.8
 

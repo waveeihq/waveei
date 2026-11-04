@@ -496,13 +496,15 @@ class DotView(context: Context, private val actions: Actions) : View(context) {
             Mode.RECORDING -> (QUIET_FILL + LISTEN_FILL_RANGE * swell) to (CREST_BASE + CREST_VOICE * heard) * (1f - calm) + CALM_CREST * calm
             Mode.IDLE, Mode.SWITCH -> REST_FILL to REST_CREST
             Mode.PAUSED -> PAUSED_FILL to PAUSED_CREST
-            Mode.PROCESSING -> REST_FILL to BUSY_CREST
+            // Processing: the water freezes as it was when the recording stopped, as on the keyboard's mic.
+            Mode.PROCESSING -> fill to crest
         }
         val ease = 1f - exp(-dt / EASE_MS)
         fill += (fillTo - fill) * ease
         crest += ((if (still) 0f else crestTo) - crest) * ease
-        // Drift: a long front wave slides one way, the back one the other, at a steady pace loud or quiet.
-        if (!still) {
+        // Drift: a long front wave slides one way, the back one the other, at a steady pace loud or quiet; frozen while
+        // processing.
+        if (!still && mode != Mode.PROCESSING) {
             frontPhase = (frontPhase + TWO_PI / FRONT_SLIDE_MS * dt) % TWO_PI
             backPhase = (backPhase - TWO_PI / BACK_SLIDE_MS * dt) % TWO_PI
         }
@@ -933,14 +935,13 @@ class DotView(context: Context, private val actions: Actions) : View(context) {
         const val RECORD_REACH = 0.8f
 
         /**
-         * The record dot's water, the keyboard's mic water in shares of the dot: at rest, paused, processing, and with
-         * the voice from silence to loud; in a long silence the waves calm to [CALM_CREST].
+         * The record dot's water, the keyboard's mic water in shares of the dot: at rest, paused, and with the voice from
+         * silence to loud; in a long silence the waves calm to [CALM_CREST]. Processing holds it as it was.
          */
         const val REST_FILL = 0.40f
         const val REST_CREST = 0.02f
         const val PAUSED_FILL = 0.42f
         const val PAUSED_CREST = 0.003f
-        const val BUSY_CREST = 0.005f
         // As the keyboard's mic: a little under rest in a silence, up to 0.86 with a loud voice.
         const val QUIET_FILL = 0.34f
         const val LISTEN_FILL_RANGE = 0.52f

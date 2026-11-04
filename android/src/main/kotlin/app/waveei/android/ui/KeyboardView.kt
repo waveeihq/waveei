@@ -1657,16 +1657,19 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
                 backCrest = lerp((CREST_BASE + BACK_CREST_GAIN * lagged) * CREST_UNIT, CALM_BACK_CREST, calm)
                 backRise = lerp(BACK_FILL_GAIN * lagged, 0f, calm)
             }
+            // Processing: the water freezes as it was when the recording stopped, its level and its waves.
+            Dictation.State.PROCESSING -> {
+                fill = waterFrom[0]
+                crest = waterFrom[1]
+                backCrest = waterFrom[2]
+                backRise = waterFrom[3]
+            }
             else -> {
                 fill = when (model.state) {
                     Dictation.State.PAUSED -> PAUSED_FILL
                     else -> IDLE_FILL
                 }
-                crest = when (model.state) {
-                    Dictation.State.PAUSED -> PAUSED_CREST
-                    Dictation.State.PROCESSING -> BUSY_CREST
-                    else -> IDLE_CREST
-                }
+                crest = if (model.state == Dictation.State.PAUSED) PAUSED_CREST else IDLE_CREST
                 backCrest = crest * BACK_CREST_SHARE
                 backRise = 0f
             }
@@ -2437,7 +2440,6 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         const val IDLE_CREST = 2.0f
         const val PAUSED_FILL = 0.42f
         const val PAUSED_CREST = 0.3f
-        const val BUSY_CREST = 0.5f
         const val BUSY_SATURATION = 0.45f
         /** Loud speech lifts the water by up to this share: 0.34 → 0.86. */
         const val LISTEN_FILL_RANGE = 0.52f
