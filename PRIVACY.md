@@ -95,7 +95,7 @@ With it on, the app:
 - reads the text field you type in, to put your dictation at the cursor; for a few minutes after a dictation, a word
   you correct there is added to your vocabulary;
 - sees which keyboard and which app are open, to offer a switch to this keyboard and to tap the field you were in;
-  when you leave an app it brings your usual keyboard back, and Waveei's again if you return within five minutes;
+  when you leave an app it brings your usual keyboard back, and Waveei's again if you return within two minutes;
 - with Auto-send on, finds the app's Send button by its label and presses it;
 - when an app does not take typed-in text, pastes it through the clipboard.
 
