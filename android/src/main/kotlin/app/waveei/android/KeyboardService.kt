@@ -91,8 +91,6 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
     private var pastedClipAt: Long
         get() = prefs.pastedClipAt
         set(value) { prefs.pastedClipAt = value }
-    // The newest clip the Clipboard panel has shown; a clip copied later lights the key's badge.
-    private var shownClipAt = System.currentTimeMillis()
 
     /** The copy time of the clip last described in the log, so each copy is logged once. */
     private var loggedClipAt = 0L
@@ -897,7 +895,6 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
 
     /** The clipboard tab: what the system clipboard holds now, then the recent copies. */
     private fun showClipboard() {
-        shownClipAt = max(shownClipAt, clip?.copiedAt ?: 0L)
         val field = currentInputConnection != null
         val rows = ArrayList<ListPanel.Row>()
         val onClipboard = getString(R.string.clip_current)
@@ -987,7 +984,6 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
             KeyboardView.Key.CLIPBOARD -> {
                 // Opened, everything in it is seen: the badge counts only what comes after.
                 prefs.historySeenAt = System.currentTimeMillis()
-                shownClipAt = max(shownClipAt, clip?.copiedAt ?: 0L)
                 placeList()
                 showTab(if (clipboardTab) ListPanel.Tab.CLIPBOARD else ListPanel.Tab.HISTORY)
                 list.visibility = View.VISIBLE
@@ -1283,10 +1279,10 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
             },
             pasteImage = preview,
             open = openList,
+            // The badge is for recordings not transcribed yet, never for a copy or a finished text.
             bufferCount = BufferStore.all().count {
-                it.id > prefs.historySeenAt && (it.status == BufferStatus.READY || it.status == BufferStatus.KEPT || it.status == BufferStatus.FAILED)
-            } +
-                (if ((clip?.copiedAt ?: 0L) > max(shownClipAt, pastedClipAt)) 1 else 0),
+                it.id > prefs.historySeenAt && (it.status == BufferStatus.KEPT || it.status == BufferStatus.FAILED)
+            },
             autoSend = prefs.autoSend,
             sendOnce = sendOnce,
             clearAsked = note == getString(R.string.clear_field_again),
