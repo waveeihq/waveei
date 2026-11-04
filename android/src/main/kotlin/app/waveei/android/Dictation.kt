@@ -542,6 +542,10 @@ object Dictation {
         val entry = BufferStore.get(id) ?: return
         if (BufferStore.audioFile(entry) == null) return
         current = id
+        // Retry is tapped in front of the field it goes into: inputs started before it (while the first try failed)
+        // no longer make it Insert here.
+        startedId = id
+        startedInputs = inputs
         retried = true
         message = null
         retryId = null

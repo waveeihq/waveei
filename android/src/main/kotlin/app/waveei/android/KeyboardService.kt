@@ -213,8 +213,12 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         // does not (bound just now, or the dot's switch still showing it, its click on the field included): a
         // dictation begun under another keyboard goes into its field as before; another app is told apart by the app
         // check on insertion.
-        val switchedIn = bound || SystemClock.uptimeMillis() - showRequestedAt < SHOW_AFTER_SWITCH_MS
-        if (!switchedIn) Dictation.inputStarted()
+        val switchedIn = bound || SystemClock.uptimeMillis() - switchedAt < SHOW_AFTER_SWITCH_MS
+        if (!switchedIn) {
+            // While a dictation is open or on its way, the start that makes it Insert here is told in the log.
+            if (Dictation.state != Dictation.State.IDLE) DebugLog.add("keyboard: input started again in ${DebugLog.name(attribute.packageName, "an app")}${if (restarting) ", the same field restarted" else ""}")
+            Dictation.inputStarted()
+        }
         bound = false
         // A send tapped for the field in front is not for the next one.
         sendOnce = false
@@ -1347,6 +1351,19 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         /** When the floating switch button asked for this keyboard (uptime), so it shows itself once it starts. */
         @Volatile
         var showRequestedAt = 0L
+            set(value) {
+                field = value
+                if (value != 0L) switchedAt = value
+            }
+
+        /**
+         * When our keyboard was last switched in (uptime). Kept after [showRequestedAt] is cleared at the first start, so
+         * the inputs the switch brings (the dot's click on the field, an app's restart) are told from a move for its
+         * whole time.
+         */
+        @Volatile
+        var switchedAt = 0L
+            private set
 
         /** Our keyboard's id, as Android names input methods. */
         fun id(context: Context): String = ComponentName(context, KeyboardService::class.java).flattenToShortString()

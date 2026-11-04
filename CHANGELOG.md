@@ -5,6 +5,7 @@ What changed in each version, as people see it. Each version's part becomes the 
 ## 1.2.8
 
 - The keyboard no longer jumps when you pull it down by its grabber: the keys go down with it instead of snapping back up.
+- A dictation goes straight into the field again after Retry, and after the floating dot switches to Waveei's keyboard, instead of waiting behind Insert here.
 
 ## 1.2.7
 
