@@ -99,8 +99,9 @@ fun BufferScreen(activity: MainActivity, nav: Navigator) {
     menu?.let { (entry, anchor) ->
         val showRaw = entry.id in raw
         val items = buildList {
-            if (entry.hasText && entry.raw != null && entry.raw != entry.text) {
-                add(MenuItem("file-text", stringResource(if (showRaw) R.string.show_final else R.string.show_raw)) { if (!raw.remove(entry.id)) raw += entry.id })
+            // On every text row, greyed where the edited text is the original as it was said.
+            if (entry.hasText) {
+                add(MenuItem("file-text", stringResource(if (showRaw) R.string.show_final else R.string.show_raw), enabled = entry.raw != null && entry.raw != entry.text) { if (!raw.remove(entry.id)) raw += entry.id })
             }
             if (canRetry(entry)) add(MenuItem("arrow-counter-clockwise", stringResource(R.string.retry)) { Dictation.retry(entry.id) })
             add(MenuItem("trash", stringResource(R.string.delete), destructive = true) { BufferStore.delete(entry.id) })

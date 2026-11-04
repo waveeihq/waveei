@@ -1120,13 +1120,16 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
             else -> null
         }
         val more = ArrayList<ListPanel.MenuItem>()
-        if (entry.hasText && entry.raw != null && entry.raw != entry.text) {
-            more += ListPanel.MenuItem("file-text", getString(if (raw) R.string.show_final else R.string.show_raw)) {
+        // On every text row, greyed where the edited text is the original as it was said.
+        if (entry.hasText) {
+            more += ListPanel.MenuItem("file-text", getString(if (raw) R.string.show_final else R.string.show_raw), enabled = entry.raw != null && entry.raw != entry.text) {
                 if (!showRaw.add(entry.id)) showRaw.remove(entry.id)
                 showBuffer()
             }
         }
         if (entry.hasText && canSend) more += ListPanel.MenuItem("arrow-counter-clockwise", getString(R.string.retry)) { send() }
+        // A recording not transcribed yet can be recorded on into, here in front of the field.
+        if (!entry.hasText && canSend) more += ListPanel.MenuItem("microphone", getString(R.string.continue_recording)) { continueKept(entry) }
         val (mark, label) = when (status) {
             BufferStatus.RECORDING -> ListPanel.Mark.Dot(colors.accent) to R.string.status_recording
             BufferStatus.TRANSCRIBING -> ListPanel.Mark.Dot(colors.accent) to R.string.status_transcribing

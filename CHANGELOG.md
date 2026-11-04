@@ -2,6 +2,11 @@
 
 What changed in each version, as people see it. Each version's part becomes the notes of its release.
 
+## 1.2.9
+
+- × on a paused dictation keeps it in History instead of throwing it away; from its ⋯ there, Continue recording records on into it.
+- Show original sits in every dictation's ⋯ in History, greyed where nothing was changed from what you said, instead of showing on some rows only.
+
 ## 1.2.8
 
 - The keyboard no longer jumps when you pull it down by its grabber: the keys go down with it instead of snapping back up.

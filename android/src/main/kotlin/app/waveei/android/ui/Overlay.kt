@@ -261,7 +261,8 @@ fun VeilSurface(shape: Shape, modifier: Modifier = Modifier, content: @Composabl
 }
 
 /** A menu entry: its glyph, its text, red for what removes something. */
-class MenuItem(val glyph: String, val text: String, val destructive: Boolean = false, val onClick: () -> Unit)
+/** [enabled] false: the item stays in its place, greyed, and does nothing. */
+class MenuItem(val glyph: String, val text: String, val destructive: Boolean = false, val enabled: Boolean = true, val onClick: () -> Unit)
 
 /**
  * A menu of veil glass hanging from [anchor] (in the window), its right edge at the anchor's: it grows from its
@@ -329,7 +330,7 @@ fun VeilMenu(anchor: Rect, items: List<MenuItem>, onDismiss: () -> Unit) {
                                     translationY = if (shown) 5.dp.toPx() * (1f - t) else 0f
                                 }
                                 .clip(RoundedCornerShape(12.dp))
-                                .clickable {
+                                .clickable(enabled = item.enabled) {
                                     onDismiss()
                                     item.onClick()
                                 }
@@ -337,9 +338,9 @@ fun VeilMenu(anchor: Rect, items: List<MenuItem>, onDismiss: () -> Unit) {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            Glyph(item.glyph, 20.dp, if (item.destructive) c.red else c.glyph)
+                            Glyph(item.glyph, 20.dp, if (!item.enabled) c.ink3 else if (item.destructive) c.red else c.glyph)
                             // A larger font wraps to a second line, then ends in an ellipsis, never cut.
-                            Text(item.text, style = type(16f, 24f, Fonts.MEDIUM), color = if (item.destructive) c.red else c.ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            Text(item.text, style = type(16f, 24f, Fonts.MEDIUM), color = if (!item.enabled) c.ink3 else if (item.destructive) c.red else c.ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
                         }
                     }
                 }

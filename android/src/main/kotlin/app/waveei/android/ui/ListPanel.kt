@@ -61,7 +61,8 @@ class ListPanel(context: Context) : FrameLayout(context) {
 
     data class Action(val label: String, val run: () -> Unit)
 
-    data class MenuItem(val icon: String, val label: String, val run: () -> Unit)
+    /** [enabled] false: the item stays in its place, greyed, and does nothing. */
+    data class MenuItem(val icon: String, val label: String, val enabled: Boolean = true, val run: () -> Unit)
 
     data class Row(
         val text: String,
@@ -645,10 +646,11 @@ class ListPanel(context: Context) : FrameLayout(context) {
                 // After the background, which would set the padding to its own (none).
                 setPadding((MENU_ITEM_PAD * u).toInt(), 0, (MENU_ITEM_PAD * u).toInt(), 0)
                 addView(ImageView(context).apply {
-                    setImageDrawable(IconDrawable(item.icon, MENU_ICON * u, colors.ink))
+                    setImageDrawable(IconDrawable(item.icon, MENU_ICON * u, if (item.enabled) colors.ink else colors.muted))
                     importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
                 }, LinearLayout.LayoutParams((MENU_ICON * u).toInt(), (MENU_ICON * u).toInt()).apply { marginEnd = (MENU_ICON_GAP * u).toInt() })
-                addView(text(item.label, MENU_TEXT, colors.ink, Fonts.MEDIUM))
+                addView(text(item.label, MENU_TEXT, if (item.enabled) colors.ink else colors.muted, Fonts.MEDIUM))
+                isEnabled = item.enabled
                 setOnClickListener {
                     closeMenu()
                     item.run()

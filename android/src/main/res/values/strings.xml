@@ -38,6 +38,7 @@
     <string name="style_formal">Formal</string>
     <string name="transcribe">Transcribe</string>
     <string name="continue_cut_off">Continue recording %1$d:%2$02d</string>
+    <string name="continue_recording">Continue recording</string>
     <string name="delete">Delete</string>
     <string name="translate_off">Off</string>
     <string name="buffer_title">History</string>
