@@ -511,13 +511,14 @@ object Dictation {
                 DebugLog.add("dictation: cancelled while transcribed, kept")
                 return setState(State.IDLE)
             }
-        } else if (state == State.PAUSED) {
-            // Paused, the recording is the user's to finish: × keeps it in History, to record on into it or send later.
-            val duration = recordedBefore
+        } else if (state == State.PAUSED || heardVoice) {
+            // Not finished by the record button, the recording is the user's to finish: × keeps it in History, to
+            // record on into it or send later. Only one with no voice in it at all goes.
+            val duration = elapsedMs()
             id?.let { BufferStore.update(it) { entry -> entry.copy(status = BufferStatus.KEPT, durationMs = duration) } }
             clear()
             message = app.getString(R.string.saved_to_buffer)
-            DebugLog.add("dictation: cancelled while paused at ${duration / 1000} s, kept")
+            DebugLog.add("dictation: cancelled at ${duration / 1000} s, kept")
             return setState(State.IDLE)
         } else {
             id?.let { control.execute { main.post { BufferStore.delete(it) } } }

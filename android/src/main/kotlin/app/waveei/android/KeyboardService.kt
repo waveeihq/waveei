@@ -1118,9 +1118,8 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
             else -> null
         }
         val more = ArrayList<ListPanel.MenuItem>()
-        // On every text row, greyed where the edited text is the original as it was said.
-        if (entry.hasText) {
-            more += ListPanel.MenuItem("file-text", getString(if (raw) R.string.show_final else R.string.show_raw), enabled = entry.rawDiffers) {
+        if (entry.hasText && entry.rawDiffers) {
+            more += ListPanel.MenuItem("file-text", getString(if (raw) R.string.show_final else R.string.show_raw)) {
                 if (!showRaw.add(entry.id)) showRaw.remove(entry.id)
                 showBuffer()
             }
