@@ -169,7 +169,15 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         if (!::keyboard.isInitialized) return
         outInsets.contentTopInsets += keyboard.topRoom
         outInsets.visibleTopInsets += keyboard.topRoom
+        // Where the app's room ends, told when it moves: a jump of the app on opening shows here as a second value.
+        if (outInsets.contentTopInsets != loggedTop) {
+            loggedTop = outInsets.contentTopInsets
+            val density = resources.displayMetrics.density
+            DebugLog.add("keyboard: app's room ends ${(loggedTop / density).toInt()} dp into the keyboard's ${((window?.window?.decorView?.height ?: 0) / density).toInt()} dp window, ${if (isInputViewShown) "shown" else "hidden"}")
+        }
     }
+
+    private var loggedTop = -1
 
     /** Never the whole screen, in landscape too: the chat stays in sight above the keys, as with AOSP's keyboard. */
     override fun onEvaluateFullscreenMode(): Boolean = false
