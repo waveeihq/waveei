@@ -258,20 +258,15 @@ class MainActivity : ComponentActivity() {
         refresh++
     }
 
-    fun cancelTide() {
-        lifecycleScope.launch {
-            when (Account.cancelTide()) {
-                Account.Outcome.DONE, Account.Outcome.LATE -> toast(getString(R.string.tide_cancelled)).also { refreshPlan() }
-                Account.Outcome.ELSEWHERE -> openPayment(LINK)
-                Account.Outcome.FAILED -> toast(getString(R.string.account_failed))
-            }
-        }
-    }
+    fun cancelTide() = changeTide(R.string.tide_cancelled) { Account.cancelTide() }
 
-    fun resubscribeTide() {
+    fun resubscribeTide() = changeTide(R.string.tide_resubscribed) { Account.resubscribeTide() }
+
+    /** Cancel or resubscribe: [done] said when it went through, Link opened where only Link can. */
+    private fun changeTide(done: Int, change: suspend () -> Account.Outcome) {
         lifecycleScope.launch {
-            when (Account.resubscribeTide()) {
-                Account.Outcome.DONE, Account.Outcome.LATE -> toast(getString(R.string.tide_resubscribed)).also { refreshPlan() }
+            when (change()) {
+                Account.Outcome.DONE, Account.Outcome.LATE -> toast(getString(done)).also { refreshPlan() }
                 Account.Outcome.ELSEWHERE -> openPayment(LINK)
                 Account.Outcome.FAILED -> toast(getString(R.string.account_failed))
             }

@@ -962,7 +962,6 @@ class ListPanel(context: Context) : FrameLayout(context) {
         private const val MENU_ITEM_DELAY_MS = 30L
         private const val MENU_ITEM_STAGGER_MS = 20L
         private const val MENU_ITEM_RISE = 5f
-        private const val DISABLED_ALPHA = 0.38f
 
         // How far a press squeezes; narrower pills deeper.
         private const val NARROW_PRESS = 0.94f

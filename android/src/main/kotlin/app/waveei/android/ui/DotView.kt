@@ -105,6 +105,7 @@ class DotView(context: Context, private val actions: Actions) : View(context) {
     /** The bubble's veil, day or night as Settings › Theme. The dots themselves look the same at night. */
     var colors = DotColors.DAY
         set(value) {
+            if (field === value) return
             field = value
             invalidate()
         }

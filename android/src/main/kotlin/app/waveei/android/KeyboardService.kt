@@ -327,11 +327,16 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
             DebugLog.add("keyboard: hidden while recording without the recording service, stopping")
             Dictation.stop()
         }
+        detach()
+        keepScreenOn(false)
+    }
+
+    /** Stops following the dictation, the buffer and screenshots; safe to call again. */
+    private fun detach() {
         Dictation.removeTarget(this)
         Dictation.removeObserver(this)
         BufferStore.removeListener(bufferChanged)
         watchScreenshots(false)
-        keepScreenOn(false)
     }
 
     override fun onFinishInput() {
@@ -345,10 +350,7 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         main.removeCallbacks(leave)
         main.removeCallbacks(showIfHidden)
         clipboard.removePrimaryClipChangedListener(clipChanged)
-        Dictation.removeTarget(this)
-        Dictation.removeObserver(this)
-        BufferStore.removeListener(bufferChanged)
-        watchScreenshots(false)
+        detach()
         super.onDestroy()
     }
 
@@ -445,7 +447,7 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         // A send tapped before the mic is for this dictation; × clears it, and so does leaving the field.
         val info = currentInputEditorInfo
         val app = info?.packageName.orEmpty()
-        val error = Dictation.start(app, signature(info), prefs.styleFor(app), prefs.translateTo)
+        val error = Dictation.start(app, signature(info))
         if (error != null) showNote(error)
     }
 
@@ -574,8 +576,7 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
 
     /** To the keyboard chosen in settings, or else to the one the person came from. */
     private fun switchBack(): Boolean {
-        val target = prefs.switchBackKeyboard.ifEmpty { null }
-            ?: previousKeyboard(this, id(this))
+        val target = switchBackTarget(this, prefs)
         if (target != null) {
             val result = runCatching { switchInputMethod(target) }
             DebugLog.add("keyboard: to ${DebugLog.name(target, "another keyboard")}: ${result.exceptionOrNull()?.javaClass?.simpleName ?: "done"}")
@@ -671,13 +672,16 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         // A dictation the plan stopped (free minutes used up, Tide needed, a phone that cannot be verified for the free
         // minutes) stays kept for Retry; its chip opens Plan. Changed Terms open Home, where their dialog asks.
         val terms = getString(R.string.agree_new_terms)
+        val messageChip = Dictation.message?.let(::planChip)
+        val noteChip = note?.let(::planChip)
+        val signIn = getString(R.string.free_used_up_tap)
         when {
             Dictation.message == terms || note == terms || (note == null && Dictation.message == null && micDisabledReason == null && prefs.termsPending) -> openApp("HOME")
-            Dictation.message != null && Dictation.retryId != null && planChip(Dictation.message!!) == null -> Unit
+            Dictation.message != null && Dictation.retryId != null && messageChip == null -> Unit
             // Signed out, the week's free minutes used up: signing in adds more, so Account, where Sign in is.
-            Dictation.message?.let(::planChip) == getString(R.string.free_used_up_tap) || note?.let(::planChip) == getString(R.string.free_used_up_tap) ||
+            messageChip == signIn || noteChip == signIn ||
                 (note == null && Dictation.message == null && Account.freeUsedUp && !Account.signedIn) -> openApp("ACCOUNT")
-            Dictation.message?.let(::planChip) != null || note?.let(::planChip) != null || (note == null && Account.freeUsedUp) -> openApp("PLAN")
+            messageChip != null || noteChip != null || (note == null && Account.freeUsedUp) -> openApp("PLAN")
             note == getString(R.string.no_account) || note == getString(R.string.no_mic_permission) ->
                 startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), MainActivity.splashless())
         }
@@ -714,10 +718,9 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
                 val pasted = currentInputConnection?.performContextMenuAction(android.R.id.paste) == true
                 DebugLog.add("clipboard: image not kept yet, ${if (pasted) "pasted" else "not pasted"} by the field")
             }
-            pastedClipAt = clip.copiedAt
-            return render()
+        } else if (currentInputConnection?.commitText(clip.text, 1) != true) {
+            return
         }
-        if (currentInputConnection?.commitText(clip.text, 1) != true) return
         pastedClipAt = clip.copiedAt
         render()
     }
@@ -1020,7 +1023,7 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
     /** The Style or Translate list in the floating card under the capsule. */
     private fun showCard(key: KeyboardView.Key) {
         val frame = RectF().also(keyboard::cardFrame)
-        if (key == KeyboardView.Key.STYLE) {
+        val (items, pinned) = if (key == KeyboardView.Key.STYLE) {
             val app = currentInputEditorInfo?.packageName.orEmpty()
             val current = prefs.styleFor(app)
             val items = Style.entries.map { style ->
@@ -1036,23 +1039,22 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
                     closeList()
                 }
             }
-            val pinned = ListCard.Pinned("gear-six", getString(R.string.style_settings)) {
+            items to ListCard.Pinned("gear-six", getString(R.string.style_settings)) {
                 closeList(animated = false)
                 openApp("STYLES")
             }
-            card.show(items, pinned, frame, keyboard.notchX(key), keyboard, colors, keyboard.unit)
         } else {
             val current = prefs.translateTo
             val items = listOf(ListCard.Item(getString(R.string.translate_off), null, current.isEmpty()) { pickLanguage("") }) +
                 prefs.translationChoices().map { tag ->
                     ListCard.Item(languageName(tag), tag.uppercase(Locale.ROOT), tag == current) { pickLanguage(tag) }
                 }
-            val pinned = ListCard.Pinned("plus", getString(R.string.add_language)) {
+            items to ListCard.Pinned("plus", getString(R.string.add_language)) {
                 closeList(animated = false)
                 openApp("TRANSLATION_LANGUAGES")
             }
-            card.show(items, pinned, frame, keyboard.notchX(key), keyboard, colors, keyboard.unit)
         }
+        card.show(items, pinned, frame, keyboard.notchX(key), keyboard, colors, keyboard.unit)
     }
 
     private fun placeList() {
@@ -1103,11 +1105,7 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
             entry.status
         }
         val raw = entry.id in showRaw && entry.raw != null
-        val text = when {
-            raw -> entry.raw!!
-            entry.hasText -> entry.text!!
-            else -> getString(R.string.not_transcribed_yet, entry.durationMs / 60_000, entry.durationMs / 1000 % 60)
-        }
+        val text = entry.rowText(this, raw)
         // A kept recording goes to the model from here: never transcribed, or once more.
         val canSend = BufferStore.audioFile(entry) != null && !entry.status.active && Dictation.state == Dictation.State.IDLE
         val send = {
@@ -1122,7 +1120,7 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         val more = ArrayList<ListPanel.MenuItem>()
         // On every text row, greyed where the edited text is the original as it was said.
         if (entry.hasText) {
-            more += ListPanel.MenuItem("file-text", getString(if (raw) R.string.show_final else R.string.show_raw), enabled = entry.raw != null && entry.raw != entry.text) {
+            more += ListPanel.MenuItem("file-text", getString(if (raw) R.string.show_final else R.string.show_raw), enabled = entry.rawDiffers) {
                 if (!showRaw.add(entry.id)) showRaw.remove(entry.id)
                 showBuffer()
             }
@@ -1182,7 +1180,7 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
     }
 
     private fun copy(text: String) {
-        getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("", text))
+        clipboard.setPrimaryClip(ClipData.newPlainText("", text))
         showNote(getString(R.string.copied))
     }
 
@@ -1226,26 +1224,30 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
                     else -> R.string.processing
                 },
             ) to KeyboardView.StatusKind.ACTIVE
-            Dictation.State.IDLE -> when {
-                // A step to take before dictating (sign in, allow the microphone, agree to changed Terms, get Tide, a
-                // phone to verify) is the accent chip that opens it. Red is only a dictation that failed, with Retry.
-                note?.let(::planChip) != null -> planChip(note!!)!! to KeyboardView.StatusKind.ACTION
-                // A local note (Copied, Already in this field, the bin's question) reads in ink; the mic's own reason
-                // stays the grey hint it already was.
-                note != null -> note!! to when {
-                    note == getString(R.string.no_account) || note == getString(R.string.no_mic_permission) || note == getString(R.string.agree_new_terms) ->
-                        KeyboardView.StatusKind.ACTION
-                    // A dictation that could not start, or ×'s question: a state, in ink.
-                    note == micDisabledReason?.let(::getString) -> KeyboardView.StatusKind.HINT
-                    else -> KeyboardView.StatusKind.ACTIVE
+            Dictation.State.IDLE -> {
+                val noteChip = note?.let(::planChip)
+                val messageChip = Dictation.message?.let(::planChip)
+                when {
+                    // A step to take before dictating (sign in, allow the microphone, agree to changed Terms, get Tide, a
+                    // phone to verify) is the accent chip that opens it. Red is only a dictation that failed, with Retry.
+                    noteChip != null -> noteChip to KeyboardView.StatusKind.ACTION
+                    // A local note (Copied, Already in this field, the bin's question) reads in ink; the mic's own reason
+                    // stays the grey hint it already was.
+                    note != null -> note!! to when {
+                        note == getString(R.string.no_account) || note == getString(R.string.no_mic_permission) || note == getString(R.string.agree_new_terms) ->
+                            KeyboardView.StatusKind.ACTION
+                        // A dictation that could not start, or ×'s question: a state, in ink.
+                        note == micDisabledReason?.let(::getString) -> KeyboardView.StatusKind.HINT
+                        else -> KeyboardView.StatusKind.ACTIVE
+                    }
+                    messageChip != null -> messageChip to KeyboardView.StatusKind.ACTION
+                    Dictation.message == getString(R.string.agree_new_terms) -> Dictation.message!! to KeyboardView.StatusKind.ACTION
+                    Dictation.message != null -> Dictation.message!! to messageKind(Dictation.message!!)
+                    micDisabledReason != null -> getString(micDisabledReason!!) to KeyboardView.StatusKind.HINT
+                    prefs.termsPending -> getString(R.string.agree_new_terms) to KeyboardView.StatusKind.ACTION
+                    Account.freeUsedUp -> usedUpChip() to KeyboardView.StatusKind.ACTION
+                    else -> getString(R.string.tap_to_talk) to KeyboardView.StatusKind.HINT
                 }
-                Dictation.message?.let(::planChip) != null -> planChip(Dictation.message!!)!! to KeyboardView.StatusKind.ACTION
-                Dictation.message == getString(R.string.agree_new_terms) -> Dictation.message!! to KeyboardView.StatusKind.ACTION
-                Dictation.message != null -> Dictation.message!! to messageKind(Dictation.message!!)
-                micDisabledReason != null -> getString(micDisabledReason!!) to KeyboardView.StatusKind.HINT
-                prefs.termsPending -> getString(R.string.agree_new_terms) to KeyboardView.StatusKind.ACTION
-                Account.freeUsedUp -> usedUpChip() to KeyboardView.StatusKind.ACTION
-                else -> getString(R.string.tap_to_talk) to KeyboardView.StatusKind.HINT
             }
         }
         val app = currentInputEditorInfo?.packageName.orEmpty()
@@ -1375,6 +1377,10 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
          * The keyboard used before [current], as Android records it: its input method history, most recent first, the
          * list the system's own switch to the previous input method reads.
          */
+        /** The keyboard to switch back to: the one chosen in settings, or else the one used before ours. */
+        fun switchBackTarget(context: Context, prefs: Prefs): String? =
+            prefs.switchBackKeyboard.ifEmpty { null } ?: previousKeyboard(context, id(context))
+
         fun previousKeyboard(context: Context, current: String): String? {
             val history = runCatching { Settings.Secure.getString(context.contentResolver, INPUT_METHOD_HISTORY) }.getOrNull() ?: return null
             val enabled = context.getSystemService(InputMethodManager::class.java).enabledInputMethodList.map { it.id }

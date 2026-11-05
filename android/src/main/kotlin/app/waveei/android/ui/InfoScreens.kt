@@ -54,6 +54,8 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import app.waveei.android.Account
 import app.waveei.android.BufferStore
+import app.waveei.android.rawDiffers
+import app.waveei.android.rowText
 import app.waveei.android.DebugLog
 import app.waveei.android.Diagnostics
 import app.waveei.android.Dictation
@@ -101,7 +103,7 @@ fun BufferScreen(activity: MainActivity, nav: Navigator) {
         val items = buildList {
             // On every text row, greyed where the edited text is the original as it was said.
             if (entry.hasText) {
-                add(MenuItem("file-text", stringResource(if (showRaw) R.string.show_final else R.string.show_raw), enabled = entry.raw != null && entry.raw != entry.text) { if (!raw.remove(entry.id)) raw += entry.id })
+                add(MenuItem("file-text", stringResource(if (showRaw) R.string.show_final else R.string.show_raw), enabled = entry.rawDiffers) { if (!raw.remove(entry.id)) raw += entry.id })
             }
             if (canRetry(entry)) add(MenuItem("arrow-counter-clockwise", stringResource(R.string.retry)) { Dictation.retry(entry.id) })
             add(MenuItem("trash", stringResource(R.string.delete), destructive = true) { BufferStore.delete(entry.id) })
@@ -159,12 +161,7 @@ private fun retryBlock(entry: BufferEntry): Int? = when {
 @Composable
 private fun HistoryRow(entry: BufferEntry, showRaw: Boolean, expanded: Boolean, onExpand: () -> Unit, onMenu: (Rect) -> Unit, context: Context) {
     val c = appColors
-    val raw = showRaw && entry.raw != null
-    val text = when {
-        raw -> entry.raw!!
-        entry.hasText -> entry.text!!
-        else -> stringResource(R.string.not_transcribed_yet, entry.durationMs / 60_000, entry.durationMs / 1000 % 60)
-    }
+    val text = entry.rowText(context, showRaw)
     var anchor by remember { mutableStateOf(Rect.Zero) }
     val words: @Composable (Modifier) -> Unit = { modifier ->
         Column(modifier.clickable(enabled = entry.hasText, onClick = onExpand)) {
@@ -177,7 +174,7 @@ private fun HistoryRow(entry: BufferEntry, showRaw: Boolean, expanded: Boolean, 
                 val meta = listOfNotNull(
                     DateFormat.getTimeFormat(context).format(entry.id),
                     appLabel(context, entry.app),
-                    statusLabel(entry.status).takeIf { entry.status != BufferStatus.KEPT },
+                    statusLabel(entry.status),
                 ).joinToString(" · ")
                 // A large font wraps the line between words rather than cutting its last word off.
                 if (LocalDensity.current.fontScale >= LARGE_FONT) Text(meta, style = type(14f, 20f), color = c.ink2) else OneLine(meta, type(14f, 20f), c.ink2)
@@ -241,18 +238,17 @@ private fun StatusMark(status: BufferStatus) {
     }
 }
 
+/** The row's status in words; none for a kept recording, whose title already says it is not transcribed. */
 @Composable
-private fun statusLabel(status: BufferStatus): String = stringResource(
-    when (status) {
-        BufferStatus.RECORDING -> R.string.status_recording
-        BufferStatus.TRANSCRIBING -> R.string.status_transcribing
-        BufferStatus.KEPT -> R.string.status_not_transcribed
-        BufferStatus.FAILED -> R.string.status_not_transcribed_failed
-        BufferStatus.READY -> R.string.status_not_inserted
-        BufferStatus.INSERTED -> R.string.status_inserted
-        BufferStatus.ALREADY_IN_FIELD -> R.string.status_already
-    },
-)
+private fun statusLabel(status: BufferStatus): String? = when (status) {
+    BufferStatus.RECORDING -> R.string.status_recording
+    BufferStatus.TRANSCRIBING -> R.string.status_transcribing
+    BufferStatus.KEPT -> null
+    BufferStatus.FAILED -> R.string.status_not_transcribed_failed
+    BufferStatus.READY -> R.string.status_not_inserted
+    BufferStatus.INSERTED -> R.string.status_inserted
+    BufferStatus.ALREADY_IN_FIELD -> R.string.status_already
+}?.let { stringResource(it) }
 
 private fun copy(context: Context, text: String) {
     context.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("dictation", text))

@@ -86,7 +86,7 @@ object Account {
      */
     val deviceId: String? by lazy {
         resolver?.let { Settings.Secure.getString(it, Settings.Secure.ANDROID_ID) }?.takeIf { it.isNotEmpty() }?.let { id ->
-            MessageDigest.getInstance("SHA-256").digest("waveei:$id".toByteArray()).take(16).joinToString("") { "%02x".format(it) }
+            MessageDigest.getInstance("SHA-256").digest("waveei:$id".toByteArray()).copyOf(16).toHexString()
         }
     }
 
@@ -265,26 +265,21 @@ object Account {
     enum class Outcome { DONE, LATE, ELSEWHERE, FAILED }
 
     /** Ends Tide at the end of the month paid for; [Outcome.ELSEWHERE] when only Link can (no subscription known here). */
-    suspend fun cancelTide(): Outcome = when (call(Api.TIDE_CANCEL).first) {
-        204 -> Outcome.DONE.also { DebugLog.add("account: Tide cancelled at period end") }
-        404, 501 -> Outcome.ELSEWHERE
-        else -> Outcome.FAILED
-    }
+    suspend fun cancelTide(): Outcome = tide(Api.TIDE_CANCEL, "Tide cancelled at period end")
 
     /** A cancelled Tide renews again; [Outcome.ELSEWHERE] when only Link can. */
-    suspend fun resubscribeTide(): Outcome = when (call(Api.TIDE_RESUME).first) {
-        204 -> Outcome.DONE.also { DebugLog.add("account: Tide resubscribed") }
-        404, 501 -> Outcome.ELSEWHERE
-        else -> Outcome.FAILED
-    }
+    suspend fun resubscribeTide(): Outcome = tide(Api.TIDE_RESUME, "Tide resubscribed")
 
     /**
      * Within 14 days of subscribing: the unused days refunded and Tide ended at once. [Outcome.LATE]: the payment is
      * older; [Outcome.ELSEWHERE]: only Link's support can refund (no subscription known here).
      */
-    suspend fun refundTide(): Outcome = when (call(Api.TIDE_REFUND).first) {
-        204 -> Outcome.DONE.also { DebugLog.add("account: Tide refunded and ended") }
-        409 -> Outcome.LATE
+    suspend fun refundTide(): Outcome = tide(Api.TIDE_REFUND, "Tide refunded and ended", late = true)
+
+    /** A Tide request's outcome, [done] logged when it went through; a 409 is [Outcome.LATE] only where [late]. */
+    private suspend fun tide(path: String, done: String, late: Boolean = false): Outcome = when (call(path).first) {
+        204 -> Outcome.DONE.also { DebugLog.add("account: $done") }
+        409 -> if (late) Outcome.LATE else Outcome.FAILED
         404, 501 -> Outcome.ELSEWHERE
         else -> Outcome.FAILED
     }

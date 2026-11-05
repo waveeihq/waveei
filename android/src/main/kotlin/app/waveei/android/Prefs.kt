@@ -173,11 +173,11 @@ class Prefs(context: Context) {
     }
 
     fun styleFor(app: String): Style =
-        if (rememberStylePerApp) prefs.getString("style_app_$app", null)?.let { Style.fromName(it) } ?: style else style
+        if (rememberStylePerApp) prefs.getString(APP_STYLE + app, null)?.let { Style.fromName(it) } ?: style else style
 
     /** A style picked on the keyboard: this app's own while remembered per app, otherwise the default. */
     fun rememberStyle(app: String, value: Style) {
-        if (rememberStylePerApp && app.isNotEmpty()) prefs.edit().putString("style_app_$app", value.name).apply() else style = value
+        if (rememberStylePerApp && app.isNotEmpty()) setAppStyle(app, value) else style = value
     }
 
     /**

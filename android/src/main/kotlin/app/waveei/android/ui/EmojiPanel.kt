@@ -44,6 +44,7 @@ class EmojiPanel(
 ) : View(context) {
     var colors = KeyboardColors.DAY
         set(value) {
+            if (field === value) return
             field = value
             invalidate()
         }
@@ -63,6 +64,7 @@ class EmojiPanel(
 
     var leftHanded = false
         set(value) {
+            if (field == value) return
             field = value
             place()
             invalidate()

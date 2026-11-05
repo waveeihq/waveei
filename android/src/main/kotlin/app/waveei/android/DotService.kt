@@ -94,7 +94,7 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
      * often, so the click comes as soon as ours is gone with no other in its place.
      */
     private val showKeyboard: Runnable = Runnable {
-        val ime = runCatching { getWindows().firstOrNull { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD } }.getOrNull()
+        val ime = imeWindow()
         // Ours may still be on its way out after the switch: looked at again a moment later.
         val other = ime?.root?.packageName?.let { it.toString() != packageName } ?: false
         // Switched to ours, which asks to show itself as it starts (KeyboardService.onStartInput) and is up before
@@ -197,12 +197,19 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
 
     private val recheckKeyboards = Runnable { checkKeyboards() }
 
+    /** The keyboard's window on screen, any keyboard's, or null. */
+    private fun imeWindow(): AccessibilityWindowInfo? =
+        runCatching { getWindows().firstOrNull { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD } }.getOrNull()
+
+    /** The app of the window in front. */
+    private val frontApp: String? get() = rootInActiveWindow?.packageName?.toString()
+
     /**
      * Which keyboard is up, if any: the switch button shows over either, and while one goes and another, already
      * chosen, comes up: no keyboard is up for a second or two then, whoever switched.
      */
     private fun checkKeyboards() {
-        val imeVisible = runCatching { getWindows().any { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD } }.getOrDefault(false)
+        val imeVisible = imeWindow() != null
         val current = KeyboardService.current(this)
         val ours = current == KeyboardService.id(this)
         if (imeVisible && !ours) lastOtherKeyboard = current
@@ -581,6 +588,10 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
             render()
         }
 
+        /** The window's left edge on the screen: its x counts from the edge it is anchored to. */
+        private fun windowLeft(view: DotView) =
+            if (view.rightEdge) resources.displayMetrics.widthPixels - params.x - view.width else params.x
+
         /** The menu beside the dot, on the side away from its edge, centred on it and kept on the screen. */
         private fun openMenu(view: DotView, items: List<DotView.Item>) {
             removeMenu()
@@ -588,8 +599,7 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
             opened.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
             val metrics = resources.displayMetrics
             val centre = view.dotCentre()
-            val windowLeft = if (view.rightEdge) metrics.widthPixels - params.x - view.width else params.x
-            val x = windowLeft + centre.x
+            val x = windowLeft(view) + centre.x
             val y = params.y + centre.y
             val room = DotMenu.SHADOW_ROOM * metrics.density
             val gap = DotMenu.GAP * metrics.density
@@ -710,13 +720,13 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
          */
         private fun fly(view: DotView, speed: Float) {
             val screen = resources.displayMetrics.widthPixels
-            val from = if (view.rightEdge) screen - params.x - view.width else params.x
+            val from = windowLeft(view)
             val leaving = view.tucked && !tucked
             if (leaving) view.tucked = false
             val wasRight = view.rightEdge
             place(view)
             val right = view.rightEdge
-            val to = if (right) screen - params.x - view.width else params.x
+            val to = windowLeft(view)
             // Still sliding out of the edge it is tucked at, it is drawn from that edge until the window moves.
             if (leaving) view.rightEdge = wasRight
             flyer?.cancel()
@@ -792,8 +802,7 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
             if (swallowing) return
             // Stays exactly where it was dropped: nothing snaps to an edge.
             val screen = resources.displayMetrics.widthPixels
-            val windowLeft = if (view.rightEdge) screen - params.x - view.width else params.x
-            val left = windowLeft + view.iconLeft().toInt()
+            val left = windowLeft(view) + view.iconLeft().toInt()
             val centre = restingCentre(left, left + view.iconWidth().toInt(), view.slot.toInt(), screen)
             log("moved to $centre, ${params.y}")
             savedX = centre
@@ -817,11 +826,11 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
         if (Dictation.state != Dictation.State.IDLE) return recorder.bubble(getString(R.string.already_recording))
         val field = focusedField()
         if (field?.isPassword == true) return recorder.bubble(getString(R.string.password_field))
-        val app = field?.packageName?.toString() ?: rootInActiveWindow?.packageName?.toString().orEmpty()
+        val app = field?.packageName?.toString() ?: frontApp.orEmpty()
         // Set before the start, whose first news would otherwise show it as the keyboard's dictation for a moment.
         micDictation = true
         micStarting = true
-        val error = Dictation.start(app, field?.let(::signature), prefs.styleFor(app), prefs.translateTo)
+        val error = Dictation.start(app, field?.let(::signature))
         micStarting = false
         micDictationId = Dictation.current
         if (error != null) {
@@ -874,7 +883,7 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
         if (returnTo.isEmpty()) return
         val now = SystemClock.uptimeMillis()
         returnTo.values.removeAll { it < now }
-        val candidates = listOfNotNull(shown, focusedField()?.packageName?.toString(), rootInActiveWindow?.packageName?.toString())
+        val candidates = listOfNotNull(shown, focusedField()?.packageName?.toString(), frontApp)
         val app = candidates.firstOrNull { it in returnTo }
         if (app == null) {
             val seen = candidates.firstOrNull()
@@ -887,7 +896,7 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
         val current = KeyboardService.current(this)
         if (current == KeyboardService.id(this)) return
         // Shown at once only in place of a keyboard already up: with none up, it waits for the field like any keyboard.
-        if (runCatching { getWindows().any { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD } }.getOrDefault(false)) {
+        if (imeWindow() != null) {
             KeyboardService.showRequestedAt = SystemClock.uptimeMillis()
         }
         val switched = switchTo(KeyboardService.id(this))
@@ -898,7 +907,7 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
     /** After a keyboard switch: if no keyboard shows a moment later, a click on the field brings one up. */
     fun checkKeyboardShown() {
         fieldBeforeSwitch = fieldBeforeSwitch ?: focusedField()
-        appBeforeSwitch = appBeforeSwitch ?: fieldBeforeSwitch?.packageName?.toString() ?: rootInActiveWindow?.packageName?.toString()
+        appBeforeSwitch = appBeforeSwitch ?: fieldBeforeSwitch?.packageName?.toString() ?: frontApp
         main.removeCallbacks(showKeyboard)
         showUntil = SystemClock.uptimeMillis() + SHOW_WAIT_MS
         main.postDelayed(showKeyboard, SHOW_CHECK_MS)
@@ -933,7 +942,7 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
 
     private fun rememberField() {
         fieldBeforeSwitch = focusedField()
-        appBeforeSwitch = fieldBeforeSwitch?.packageName?.toString() ?: rootInActiveWindow?.packageName?.toString()
+        appBeforeSwitch = fieldBeforeSwitch?.packageName?.toString() ?: frontApp
     }
 
     /** The text field of [app] when none has the focus: the one with [like]'s view id, else the lowest visible one. */
@@ -980,8 +989,7 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
      * keyboard hidden after the keyboard switches itself, but show it after this switch.
      */
     fun switchBack(): Boolean {
-        val target = prefs.switchBackKeyboard.ifEmpty { null } ?: KeyboardService.previousKeyboard(this, KeyboardService.id(this))
-            ?: lastOtherKeyboard ?: return false
+        val target = KeyboardService.switchBackTarget(this, prefs) ?: lastOtherKeyboard ?: return false
         // Taken before the switch: after it, the field may no longer have the focus.
         rememberField()
         val switched = switchTo(target)
@@ -1095,7 +1103,7 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
      * drop the focus while no keyboard is up; away from that app, the text waits for Insert here.
      */
     private fun fieldFor(app: String?): AccessibilityNodeInfo? =
-        focusedField() ?: app?.takeIf { it == rootInActiveWindow?.packageName?.toString() }?.let { fieldIn(it, null) }
+        focusedField() ?: app?.takeIf { it == frontApp }?.let { fieldIn(it, null) }
 
     private fun currentText(field: AccessibilityNodeInfo): String = FieldText.readable(field.text, field.isShowingHintText)
 

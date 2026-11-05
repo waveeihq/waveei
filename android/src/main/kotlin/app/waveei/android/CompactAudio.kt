@@ -23,8 +23,7 @@ object CompactAudio {
     fun voicedChunks(pcm: ByteArray, voiceLevel: Float): Int {
         val chunk = AudioCapture.CHUNK_BYTES
         return (0 until (pcm.size + chunk - 1) / chunk).count { i ->
-            val part = pcm.copyOfRange(i * chunk, minOf((i + 1) * chunk, pcm.size))
-            AudioCapture.level(part, part.size) > voiceLevel
+            AudioCapture.level(pcm, minOf(chunk, pcm.size - i * chunk), i * chunk) > voiceLevel
         }
     }
 

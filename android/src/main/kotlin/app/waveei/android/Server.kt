@@ -50,7 +50,7 @@ object Server {
                 // No token yet (a slow refresh, no network): a failure worth trying again, not a refusal by the server.
                 val token = Account.token() ?: throw IOException("no sign-in token")
                 val request = chain.request().newBuilder().header("Authorization", "Bearer $token").header(Api.BUILD, BuildConfig.VERSION_CODE.toString())
-                Account.appCheckToken()?.let { request.header(APP_CHECK, it) }
+                Account.appCheckToken()?.let { request.header(Api.APP_CHECK, it) }
                 if (!Account.tide && chain.request().url.encodedPath in COUNTED) Account.deviceId?.let { request.header(FreeTier.DEVICE, it) }
                 chain.proceed(request.build())
             }
@@ -82,7 +82,7 @@ object Server {
     fun stats(batch: StatsBatch): Int {
         val body = Api.json.encodeToString(StatsBatch.serializer(), batch).toRequestBody(JSON)
         val request = Request.Builder().url(url(Api.STATS)).post(body)
-        Account.appCheckToken()?.let { request.header(APP_CHECK, it) }
+        Account.appCheckToken()?.let { request.header(Api.APP_CHECK, it) }
         return open.newCall(request.build()).execute().use { it.code }
     }
 
@@ -170,8 +170,6 @@ object Server {
             if (counted.compareAndSet(true, false)) uploading.decrementAndGet()
         }
     }
-
-    private const val APP_CHECK = "X-Firebase-AppCheck"
 
     /** The calls the free tier counts, or answers with the minutes left. */
     private val COUNTED = setOf(Api.TRANSCRIBE, Api.DRAFT, Api.PLAN)

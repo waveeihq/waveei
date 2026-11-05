@@ -36,8 +36,13 @@ object DebugLog {
 
     fun add(line: String) {
         // A developer build's trace keeps the names everywhere; otherwise only what is shared has them.
-        val named = if (OPEN in line) NAMED.replace(line) { it.groupValues[2] } else line
-        val plain = if (OPEN in line && Trace.current == null) NAMED.replace(line) { it.groupValues[1] } else named
+        val hasName = OPEN in line
+        val keepsNames = !hasName || Trace.current != null
+        val plain = when {
+            !hasName -> line
+            keepsNames -> NAMED.replace(line) { it.groupValues[2] }
+            else -> NAMED.replace(line) { it.groupValues[1] }
+        }
         Log.i("waveei", plain)
         val now = System.currentTimeMillis()
         val stamped = stamp(now, plain)
@@ -55,7 +60,7 @@ object DebugLog {
         Trace.current?.line(stamped)
         if (share) synchronized(pending) {
             if (pending.isEmpty()) sender.schedule(::send, SEND_DELAY_MS, TimeUnit.MILLISECONDS)
-            if (pending.length < MAX_PENDING) pending.append(if (named === plain) stamped else stamp(now, named))
+            if (pending.length < MAX_PENDING) pending.append(if (keepsNames) stamped else stamp(now, NAMED.replace(line) { it.groupValues[2] }))
         }
     }
 

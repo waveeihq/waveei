@@ -3,6 +3,7 @@ package app.waveei.android
 import android.content.Context
 import android.os.SystemClock
 import android.view.accessibility.AccessibilityNodeInfo
+import app.waveei.core.api.Piece
 import app.waveei.core.text.Corrections
 
 /**
@@ -73,6 +74,5 @@ object Learning {
     /** How long after the insertion an edit still counts as a correction of the dictation. */
     private const val WATCH_MS = 10 * 60_000L
 
-    /** The vocabulary goes with every dictation, so it stays short. */
-    const val MAX_WORDS = 100
+    const val MAX_WORDS = Piece.MAX_WORDS
 }

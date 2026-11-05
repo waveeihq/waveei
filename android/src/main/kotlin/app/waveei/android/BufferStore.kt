@@ -41,6 +41,11 @@ object BufferStore {
 
     fun add(entry: BufferEntry) = change { it.filterNot { e -> e.id == entry.id } + entry }
 
+    /** Adds [entry] and, in the same write, answers every cut-off row's question: those stay as they are. */
+    fun addClearingInterrupted(entry: BufferEntry) = change { list ->
+        list.map { if (it.interrupted) it.copy(interrupted = false) else it }.filterNot { it.id == entry.id } + entry
+    }
+
     fun update(id: Long, transform: (BufferEntry) -> BufferEntry) = change { list ->
         list.map { if (it.id == id) transform(it) else it }
     }
@@ -119,3 +124,13 @@ object BufferStore {
         DebugLog.add("buffer: recovered ${orphans.size} recordings, ${if (stale) "reset" else "no"} unfinished rows")
     }
 }
+
+/** What a History row reads: the original words when [showRaw], else the text, or a recording's length untranscribed. */
+fun BufferEntry.rowText(context: Context, showRaw: Boolean): String = when {
+    showRaw && raw != null -> raw!!
+    hasText -> text!!
+    else -> context.getString(R.string.not_transcribed_yet, durationMs / 60_000, durationMs / 1000 % 60)
+}
+
+/** The edited text differs from the words as said: Show original has something to show. */
+val BufferEntry.rawDiffers: Boolean get() = raw != null && raw != text

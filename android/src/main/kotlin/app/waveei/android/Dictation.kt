@@ -330,7 +330,7 @@ object Dictation {
     private val termsStop: Boolean get() = prefs.termsPending && Account.plan != Plan.TIDE
 
     /** Starts a dictation for a field; returns a short reason if it cannot start. */
-    fun start(appPackage: String, field: String?, style: Style, translateTo: String?): String? {
+    fun start(appPackage: String, field: String?): String? {
         if (state != State.IDLE) return null
         styleDropped = false
         if (termsStop) return app.getString(R.string.agree_new_terms)
@@ -343,7 +343,7 @@ object Dictation {
             return app.getString(R.string.no_mic_permission)
         }
         val id = System.currentTimeMillis()
-        val file = File(BufferStore.audioDir, "$id.pcm")
+        val file = audioOf(id)
         val online = isOnline()
         tappedAt = SystemClock.elapsedRealtime()
         micReady = false
@@ -363,8 +363,7 @@ object Dictation {
         startedId = id
         startedInputs = inputs
         capture = audio
-        this.style = style
-        this.translateTo = translateTo?.takeIf { it.isNotEmpty() }
+        useStyleOf(appPackage)
         recordedBefore = 0
         segmentStartedAt = SystemClock.elapsedRealtime()
         silentMs = 0
@@ -378,8 +377,7 @@ object Dictation {
         liveWords = ""
         retryId = null
         // A new dictation answers the keyboard's question about a cut-off one: that one stays in the buffer.
-        BufferStore.all().filter { it.interrupted }.forEach { row -> BufferStore.update(row.id) { it.copy(interrupted = false) } }
-        BufferStore.add(BufferEntry(id, BufferStatus.RECORDING, app = appPackage, field = field, audio = file.name))
+        BufferStore.addClearingInterrupted(BufferEntry(id, BufferStatus.RECORDING, app = appPackage, field = field, audio = file.name))
         DebugLog.add("dictation: started${if (online) "" else " offline"}, style ${style.name}${if (drafting) ", live words" else ""}${this.translateTo?.let { ", to $it" } ?: ""}")
         setState(State.RECORDING)
         return null
@@ -411,8 +409,7 @@ object Dictation {
         startedInputs = inputs
         capture = audio
         listeningShown = true
-        style = prefs.styleFor(appPackage)
-        translateTo = prefs.translateTo.takeIf { it.isNotEmpty() }
+        useStyleOf(appPackage)
         recordedBefore = AudioCapture.durationMs(length)
         segmentStartedAt = SystemClock.elapsedRealtime()
         silentMs = 0
@@ -458,7 +455,7 @@ object Dictation {
     fun resume() {
         if (state != State.PAUSED) return
         val id = current ?: return
-        val file = File(BufferStore.audioDir, "$id.pcm")
+        val file = audioOf(id)
         val audio = capture(file)
         if (!audio.start()) {
             message = app.getString(R.string.mic_failed)
@@ -557,8 +554,7 @@ object Dictation {
         retried = true
         message = null
         retryId = null
-        style = prefs.styleFor(entry.app)
-        translateTo = prefs.translateTo.takeIf { it.isNotEmpty() }
+        useStyleOf(entry.app)
         stoppedAt = SystemClock.elapsedRealtime()
         BufferStore.update(id) { it.copy(status = BufferStatus.TRANSCRIBING, error = null, interrupted = false) }
         setState(State.PROCESSING)
@@ -757,7 +753,7 @@ object Dictation {
         val id = current ?: return
         if (!state.open) return
         if (!Server.ready) return
-        val file = File(BufferStore.audioDir, "$id.pcm")
+        val file = audioOf(id)
         val shape = Shape(style, translateTo)
         val result = pieceWork.submit(Callable { transcribePiece(file, from, to, shape, { PIECE_LIMIT_MS }) })
         pieces += Piece(from, to, result, shape)
@@ -772,7 +768,7 @@ object Dictation {
         val id = current ?: return
         if (!state.open) return
         if (!Server.ready) return
-        val file = File(BufferStore.audioDir, "$id.pcm")
+        val file = audioOf(id)
         val start = (from - DRAFT_OVERLAP_MS / CHUNK_MS * AudioCapture.CHUNK_BYTES).coerceAtLeast(0L)
         drafts += draftWork.submit(Callable { transcribePiece(file, start, to, null, { DRAFT_LIMIT_MS }).also { main.post { showDrafts(id) } } })
     }
@@ -869,7 +865,7 @@ object Dictation {
         val wait = waiting ?: return
         if (state != State.IDLE) return
         // Too late, or already taken from the buffer: the wait ends there.
-        if (!isWaiting || BufferStore.get(wait.id)?.status != BufferStatus.READY) {
+        if (!isWaiting) {
             waiting = null
             notifyChanged()
             return
@@ -922,14 +918,13 @@ object Dictation {
         val kept = if (retried) BufferStatus.KEPT else status
         BufferStore.update(id) { it.copy(status = kept, error = text) }
         message = text
-        retryId = id
-        finishIdle(keepRetry = true)
+        finishIdle(retry = id)
     }
 
-    private fun finishIdle(keepRetry: Boolean = false) {
-        val retry = retryId
+    /** Back to idle; [retry] is the recording Retry sends again, if any. */
+    private fun finishIdle(retry: Long? = null) {
         clear()
-        if (keepRetry) retryId = retry
+        retryId = retry
         setState(State.IDLE)
         resendFailed()
     }
@@ -961,22 +956,8 @@ object Dictation {
         } else {
             silentMs += CHUNK_MS
         }
-        val length = ((recordedBytes - pieceFrom) / AudioCapture.CHUNK_BYTES).toInt()
-        if (CompactAudio.cutsHere(length, level, PIECE_CHUNKS, SILENCE_LEVEL)) {
-            val from = pieceFrom
-            val to = recordedBytes
-            pieceFrom = to
-            main.post { sendPiece(from, to) }
-        }
-        if (drafting) {
-            val length = ((recordedBytes - draftFrom) / AudioCapture.CHUNK_BYTES).toInt()
-            if (CompactAudio.cutsHere(length, level, DRAFT_CHUNKS, SILENCE_LEVEL)) {
-                val from = draftFrom
-                val to = recordedBytes
-                draftFrom = to
-                main.post { sendDraft(from, to) }
-            }
-        }
+        pieceFrom = cut(pieceFrom, level, PIECE_CHUNKS, ::sendPiece)
+        if (drafting) draftFrom = cut(draftFrom, level, DRAFT_CHUNKS, ::sendDraft)
         val autoPause = heardVoice && silentMs >= AUTO_PAUSE_MS && prefs.autoPause
         // No voice at all from the start: a recording begun by mistake, dropped rather than kept running.
         val unheard = !heardVoice && silentMs >= NO_VOICE_CANCEL_MS
@@ -993,6 +974,22 @@ object Dictation {
             }
         }
     }
+
+    /** Where the next piece of at most [chunks] starts: here, with the one since [from] sent, if it is cut now. */
+    private fun cut(from: Long, level: Float, chunks: Int, send: (Long, Long) -> Unit): Long {
+        val to = recordedBytes
+        if (!CompactAudio.cutsHere(((to - from) / AudioCapture.CHUNK_BYTES).toInt(), level, chunks, SILENCE_LEVEL)) return from
+        main.post { send(from, to) }
+        return to
+    }
+
+    /** The style and translation set for [app] now. */
+    private fun useStyleOf(app: String) {
+        style = prefs.styleFor(app)
+        translateTo = prefs.translateTo.takeIf { it.isNotEmpty() }
+    }
+
+    private fun audioOf(id: Long) = File(BufferStore.audioDir, "$id.pcm")
 
     private fun setState(value: State) {
         state = value

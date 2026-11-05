@@ -205,6 +205,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
 
     var colors = KeyboardColors.DAY
         set(value) {
+            if (field === value) return
             field = value
             background.setShader(null)
             invalidate()
@@ -214,6 +215,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
 
     var leftHanded = false
         set(value) {
+            if (field == value) return
             field = value
             layoutKeys()
             invalidate()
@@ -1163,7 +1165,10 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
     private enum class Look { TEXT, LIVE, CHIP }
 
     /** [dots]: Listening, with three dots that come one by one and fade together, slowly, while it listens. */
-    private data class StatusLook(val look: Look, val text: String, val kind: StatusKind = StatusKind.ACTIVE, val dots: Boolean = false)
+    private data class StatusLook(val look: Look, val text: String, val kind: StatusKind = StatusKind.ACTIVE, val dots: Boolean = false) {
+        /** Live words' last few, cut once per look rather than on every frame. */
+        val tail: String by lazy(LazyThreadSafetyMode.NONE) { text.split(' ').takeLast(LIVE_WORDS).joinToString(" ") }
+    }
 
     /** What the status line says, for TalkBack's announcement: without the live words. */
     private fun spoken(m: Model): String = when {
@@ -1222,7 +1227,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
                     canvas.drawText(shown, 0, shown.length, chip.left + CHIP_PAD_STATUS * s, baseline(strongText, chip.centerY()), strongText)
                 }
             }
-            Look.LIVE -> drawLive(canvas, look.text, r)
+            Look.LIVE -> drawLive(canvas, look.tail, r)
             Look.TEXT -> {
                 val paint = if (look.kind == StatusKind.HINT) hintText else mediumText
                 paint.textSize = STATUS_TEXT * s
@@ -1235,23 +1240,24 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
                 // One line whenever it fits in the status's narrower text column ("Server busy", "Stopped"); a longer
                 // one wraps to two lines in that column rather than running across the panel.
                 val column = min(r.width(), STATUS_LINE_MAX * s)
-                val fits = paint.measureText(look.text) <= column
+                val textW = paint.measureText(look.text)
+                val fits = textW <= column
                 val split = if (fits) -1 else look.text.indexOf(EM_DASH)
                 val dots = if (look.dots) paint.measureText(DOTS) else 0f
-                if (look.dots && split < 0 && paint.measureText(look.text) + dots <= r.width()) {
+                if (look.dots && split < 0 && textW + dots <= r.width()) {
                     // The dots' room is kept, so the word stands still while they come and go.
-                    val left = r.centerX() - (paint.measureText(look.text) + dots) / 2
+                    val left = r.centerX() - (textW + dots) / 2
                     val y = baseline(paint, r.centerY())
                     canvas.drawText(look.text, left, y, paint)
                     val alpha = paint.alpha
                     val dot = paint.measureText(DOTS, 0, 1)
                     for (i in 0 until 3) {
                         paint.alpha = (alpha * dotShown(i)).toInt()
-                        canvas.drawText(DOTS, i, i + 1, left + paint.measureText(look.text) + i * dot, y, paint)
+                        canvas.drawText(DOTS, i, i + 1, left + textW + i * dot, y, paint)
                     }
                     paint.alpha = alpha
                 } else if (fits) {
-                    canvas.drawText(look.text, r.centerX() - paint.measureText(look.text) / 2, baseline(paint, r.centerY()), paint)
+                    canvas.drawText(look.text, r.centerX() - textW / 2, baseline(paint, r.centerY()), paint)
                 } else {
                     // Two-line outcomes, 14 / 19, split at the em dash, which goes: the second line starts with its
                     // word, capitalised, never with a dash. Any other long line wraps, balanced.
@@ -1294,11 +1300,10 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
      * Live words run: one line across the status place, new words coming in through the soft right edge and older
      * ones going out through the soft left one, both edges alike.
      */
-    private fun drawLive(canvas: Canvas, words: String, r: RectF) {
+    private fun drawLive(canvas: Canvas, shown: String, r: RectF) {
         mediumText.textSize = STATUS_TEXT * s
         mediumText.color = colors.live
         liveRect.set(r)
-        val shown = words.split(' ').takeLast(LIVE_WORDS).joinToString(" ")
         val shift = liveShift * (1f - liveSlide())
         canvas.saveLayer(liveRect, null)
         canvas.clipRect(liveRect)

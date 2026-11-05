@@ -130,12 +130,12 @@ class AudioCapture(
         fun durationMs(bytes: Long): Long = bytes * 1000 / (SAMPLE_RATE * 2)
 
         /** RMS of 16-bit little-endian samples mapped from dBFS to 0..1. */
-        fun level(pcm: ByteArray, length: Int): Float {
+        fun level(pcm: ByteArray, length: Int, offset: Int = 0): Float {
             var sum = 0.0
             val samples = length / 2
             if (samples == 0) return 0f
             for (i in 0 until samples) {
-                val sample = (pcm[2 * i].toInt() and 0xFF) or (pcm[2 * i + 1].toInt() shl 8)
+                val sample = (pcm[offset + 2 * i].toInt() and 0xFF) or (pcm[offset + 2 * i + 1].toInt() shl 8)
                 sum += sample.toDouble() * sample
             }
             val rms = sqrt(sum / samples) / 32768.0

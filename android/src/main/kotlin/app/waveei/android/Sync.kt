@@ -80,7 +80,7 @@ object Sync {
     /** Only with Tide, and for the account the copy was agreed with: another account starts as a new phone. */
     private fun run(work: () -> Unit) {
         if (!Account.tide) return
-        if (store.getString(UID, null) != Account.uid) store.edit().clear().apply()
+        if (store.getString(UID, null) != Account.uid) forget()
         runCatching(work).onFailure { DebugLog.add("sync: failed: ${it.javaClass.simpleName}") }
     }
 

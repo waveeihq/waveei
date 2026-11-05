@@ -67,6 +67,9 @@ object Api {
     /** Every call but [STATS] carries the app's build, its version code, so the server's log tells builds apart. */
     const val BUILD = "X-Build"
 
+    /** Firebase App Check's token, on every call that has one. */
+    const val APP_CHECK = "X-Firebase-AppCheck"
+
     /** The answer's kind of failure when Tide's dictation for today is used up: 429, and no use trying again today. */
     const val DAY_USED_UP = "day_used_up"
 
@@ -108,7 +111,12 @@ data class Piece(
     val languages: String? = null,
     /** The person's own spellings of names and terms. */
     val vocabulary: List<String> = emptyList(),
-)
+) {
+    companion object {
+        /** The vocabulary goes with every dictation, so it stays short: the app keeps and sends at most this many. */
+        const val MAX_WORDS = 100
+    }
+}
 
 /** The words of a piece and, when a style or a translation was asked for, the shaped text. */
 @Serializable
