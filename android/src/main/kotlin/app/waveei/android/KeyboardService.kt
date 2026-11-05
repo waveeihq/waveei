@@ -212,6 +212,9 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
      */
     private var bound = false
 
+    /** The field of the last input start, to tell a restart of the same field from a move. */
+    private var lastSignature: String? = null
+
     override fun onBindInput() {
         super.onBindInput()
         bound = true
@@ -225,9 +228,14 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         // dictation begun under another keyboard goes into its field as before; another app is told apart by the app
         // check on insertion.
         val switchedIn = bound || SystemClock.uptimeMillis() - switchedAt < SHOW_AFTER_SWITCH_MS
-        if (!switchedIn) {
+        // A restart of the very field it was (same app, id, name, hint and type) is no move: some apps (Claude) restart
+        // their field while it is typed into, and the dictation must still go in there.
+        val signature = signature(attribute)
+        val sameRestart = restarting && signature != null && signature == lastSignature
+        lastSignature = signature
+        if (!switchedIn && !sameRestart) {
             // While a dictation is open or on its way, the start that makes it Insert here is told in the log.
-            if (Dictation.state != Dictation.State.IDLE) DebugLog.add("keyboard: input started again in ${DebugLog.name(attribute.packageName, "an app")}${if (restarting) ", the same field restarted" else ""}")
+            if (Dictation.state != Dictation.State.IDLE) DebugLog.add("keyboard: input started again in ${DebugLog.name(attribute.packageName, "an app")}${if (restarting) ", another field restarted" else ""}")
             Dictation.inputStarted()
         }
         bound = false

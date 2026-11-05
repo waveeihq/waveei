@@ -2,6 +2,10 @@
 
 What changed in each version, as people see it. Each version's part becomes the notes of its release.
 
+## 1.2.11
+
+- A dictation in Claude (and other apps that refresh their text field while you type) goes into the field again instead of waiting as Insert here.
+
 ## 1.2.10
 
 - Show original in History's ⋯ shows again only where the text was changed from what you said.
