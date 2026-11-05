@@ -265,7 +265,7 @@ class Glass(private val random: () -> Double = Random.Default::nextDouble) {
         // The water leans at most MAX_LEAN; the edge's straight part rises SIDES more, the top face's Z_SIDES; the far
         // edge lags the near one by FAR_LAG, DEPTH of the difference. The pool is POOL card widths wide on GRID cells,
         // its middle OFF card widths right of the card's, so the edge turns about a point 40 % across the card.
-        private const val MAX_LEAN = 10 * Math.PI / 180
+        private const val MAX_LEAN = 9 * Math.PI / 180
         private const val SIDES = 0.8
         private const val Z_SIDES = 0.3
         private const val DEPTH = 0.7
@@ -274,12 +274,9 @@ class Glass(private val random: () -> Double = Random.Default::nextDouble) {
         private const val OFF = 0.1
         private const val GRID = 120
 
-        /**
-         * The edge: leans little, so it rises and falls low, held back as by a thick liquid; after a tilt it comes to its
-         * lean with one small overshoot and stays, without rocking back.
-         */
-        private val EDGE = Kind(k = 0.12, speed = 420.0, loss = 2.5, smooth = 800.0)
-        /** Only the stir: how fast the light water under the edge moves. */
+        /** The edge: leans little, so it rises and falls low. */
+        private val EDGE = Kind(k = 0.1, speed = 420.0, loss = 0.6, smooth = 800.0)
+        /** Only the stir: the light water under the edge follows more of the lean. */
         private val BODY = Kind(k = 0.3, speed = 420.0, loss = 0.6, smooth = 800.0)
         /**
          * Ripples: only a jolt (the pull's change from how it has been held over its hold lag) stirs them; slower and

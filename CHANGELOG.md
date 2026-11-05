@@ -4,7 +4,6 @@ What changed in each version, as people see it. Each version's part becomes the 
 
 ## 1.2.10
 
-- The water on the home screen settles after a tilt with one small overshoot instead of swinging back and forth, and leans a little more.
 - Show original in History's ⋯ shows again only where the text was changed from what you said.
 
 ## 1.2.9
