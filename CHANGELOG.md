@@ -4,7 +4,6 @@ What changed in each version, as people see it. Each version's part becomes the 
 
 ## 1.2.10
 
-- × keeps a dictation in History while it is recording too, not only when paused, so you can record on into it later from its ⋯. Only a recording with no voice in it goes.
 - Show original in History's ⋯ shows again only where the text was changed from what you said.
 
 ## 1.2.9
