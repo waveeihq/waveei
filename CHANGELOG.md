@@ -5,6 +5,8 @@ What changed in each version, as people see it. Each version's part becomes the 
 ## 1.2.10
 
 - Show original in History's ⋯ shows again only where the text was changed from what you said.
+- The app above the keyboard no longer jumps when the keyboard opens.
+- Style and Translate open their list only on a tap or a hold: a finger sliding down off them no longer opens it and picks a row by chance.
 
 ## 1.2.9
 

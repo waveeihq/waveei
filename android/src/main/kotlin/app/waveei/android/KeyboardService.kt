@@ -159,9 +159,14 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         window.insetsController?.setSystemBarsAppearance(if (colors == KeyboardColors.NIGHT) 0 else light, light)
     }
 
+    /**
+     * The shadow's room above the panel stays the app's, shown or hidden alike: insets that drop it while the window is
+     * hidden come back on the next show a little lower than Android expected, and the app jumps by it (AOSP LatinIME
+     * fixed the same in 2011, bug 4317779: insets set even while the input view is not shown).
+     */
     override fun onComputeInsets(outInsets: InputMethodService.Insets) {
         super.onComputeInsets(outInsets)
-        if (!::keyboard.isInitialized || !isInputViewShown) return
+        if (!::keyboard.isInitialized) return
         outInsets.contentTopInsets += keyboard.topRoom
         outInsets.visibleTopInsets += keyboard.topRoom
     }

@@ -1752,7 +1752,10 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         }
     }
 
-    /** Held, or dragged down off, Style or Translate: its card opens (if it is not open yet) and the finger slides on it. */
+    /**
+     * Held, Style or Translate: its card opens (if it is not open yet) and the finger slides on it. Only a hold: a drag down
+     * off the capsule (a finger meant for the strip above it) does nothing, so it cannot pick a row by chance.
+     */
     private fun slideIntoCard() {
         val key = pressed ?: return
         if (sliding) return
@@ -1836,18 +1839,13 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
                     // Held still, the space bar turns into the cursor's touchpad; slid at once, it does so too.
                     Key.SPACE -> postDelayed(cursorHold, LONG_PRESS_MS)
                     Key.SEND, Key.SWITCH, Key.PASTE, Key.STATUS -> postDelayed(longPress, LONG_PRESS_MS)
-                    Key.STYLE, Key.TRANSLATE -> postDelayed(longPress, CARD_HOLD_MS)
+                    Key.STYLE, Key.TRANSLATE -> postDelayed(longPress, LONG_PRESS_MS)
                     else -> Unit
                 }
                 invalidate()
             }
             MotionEvent.ACTION_MOVE -> {
                 velocity?.addMovement(event)
-                // Dragged down off Style or Translate, the card opens under the finger.
-                if ((pressed == Key.STYLE || pressed == Key.TRANSLATE) && !sliding) {
-                    val dy = event.y - downY
-                    if (dy > ViewConfiguration.get(context).scaledTouchSlop && dy > abs(event.x - downX)) slideIntoCard()
-                }
                 if (sliding) {
                     actions.onCardSlide(event.rawX, event.rawY)
                     return true
@@ -2533,7 +2531,6 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         const val WORD_AFTER = 20
         const val WORD_INTERVAL_MS = 180L
         const val LONG_PRESS_MS = 450L
-        const val CARD_HOLD_MS = 300L
         /** How far the finger slides along the space bar for the cursor to move one character. */
         const val CURSOR_STEP_DP = 10f
         /** How far the finger slides up or down for the cursor to move one line. */
