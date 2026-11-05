@@ -22,8 +22,8 @@ class GlassTest {
     }
 
     /**
-     * Reference values (first taken from the design page, since 2026-11-05 Glass's own, the edge keeping level with
-     * the ground) for one input, Math.random as [mulberry32] seeded 12345: upright for half a second, a 20° roll over 0.3 s, a 6 m/s² jolt sideways for four
+     * Reference values (first taken from the design page, since 2026-11-05 Glass's own, the edge settling without
+     * rocking back) for one input, Math.random as [mulberry32] seeded 12345: upright for half a second, a 20° roll over 0.3 s, a 6 m/s² jolt sideways for four
      * frames at 1.5 s, then held, at 60 frames a second on a 379 dp card.
      */
     @Test
@@ -73,10 +73,10 @@ class GlassTest {
                 doubleArrayOf(370.1544494628906, 25.8233699798584, 1.7231491804122925, 0.9453803300857544, 130.67552185058594, 9.368398666381836, 2.202873945236206, 0.9990479350090027),
             ),
             60 to Page(
-                doubleArrayOf(-19.399822235107422, -4.465917110443115, 2.6356568336486816, 15.506919860839844, 37.31851577758789),
-                doubleArrayOf(-15.24305248260498, -3.4184508323669434, 2.0915651321411133, 11.894883155822754, 32.353912353515625),
+                doubleArrayOf(-3.915053606033325, -0.8362356424331665, 0.4983726739883423, 2.9919493198394775, 8.785505294799805),
+                doubleArrayOf(-3.133017063140869, -0.6512839794158936, 0.4017438292503357, 2.332035779953003, 7.770421028137207),
                 0.7935067349684579, 1.4747830650139746, 6,
-                doubleArrayOf(372.1822814941406, 30.284196853637695, 1.7231491804122925, 0.9453803300857544, 146.2628173828125, 14.952585220336914, 2.202873945236206, 0.9990479350090027),
+                doubleArrayOf(369.6511535644531, 30.284196853637695, 1.7231491804122925, 0.9453803300857544, 134.3328857421875, 14.952585220336914, 2.202873945236206, 0.9990479350090027),
             ),
         )
     }

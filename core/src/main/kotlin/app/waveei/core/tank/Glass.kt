@@ -275,10 +275,10 @@ class Glass(private val random: () -> Double = Random.Default::nextDouble) {
         private const val GRID = 120
 
         /**
-         * The edge: it keeps level with the ground as real water does, so on the screen it leans as much as the phone
-         * (the pool's lean and SIDES together), up to MAX_LEAN; after a tilt it rocks a couple of times and settles.
+         * The edge: leans little, so it rises and falls low, held back as by a thick liquid; after a tilt it comes to its
+         * lean with one small overshoot and stays, without rocking back.
          */
-        private val EDGE = Kind(k = 1 / (1 + SIDES), speed = 420.0, loss = 1.5, smooth = 800.0)
+        private val EDGE = Kind(k = 0.12, speed = 420.0, loss = 2.5, smooth = 800.0)
         /** Only the stir: how fast the light water under the edge moves. */
         private val BODY = Kind(k = 0.3, speed = 420.0, loss = 0.6, smooth = 800.0)
         /**
