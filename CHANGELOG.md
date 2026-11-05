@@ -7,6 +7,9 @@ What changed in each version, as people see it. Each version's part becomes the 
 - Show original in History's ⋯ shows again only where the text was changed from what you said.
 - The app above the keyboard no longer jumps when the keyboard opens.
 - Style and Translate open their list only on a tap or a hold: a finger sliding down off them no longer opens it and picks a row by chance.
+- A tap on the recording dot stops the recording also when it was started from the keyboard in another app; Show keyboard stays in the dot's menu.
+- The keyboard offers to paste only a copied image or a screenshot; copied text waits in the clipboard without asking.
+- A paused dictation says what × does: Paused — press × to continue later.
 
 ## 1.2.9
 

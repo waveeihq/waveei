@@ -519,9 +519,6 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
             main.postDelayed(hideBubble, BUBBLE_MS)
         }
 
-        /** A dictation going on that the keyboard started, not this dot. */
-        private fun followsKeyboard(view: DotView) = icon == Icon.RECORD && view.mode in BUSY && !micDictation
-
         // DotView.Actions
 
         override fun onTap() {
@@ -540,12 +537,11 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
             val now = SystemClock.uptimeMillis()
             if (now - actedAt < DEBOUNCE_MS) return log("second tap right after the last one, ignored")
             actedAt = now
-            // Each dot acts only for itself: the switch dot switches; the record dot brings our keyboard back to a
-            // dictation started there, and records and stops its own. Nothing else answers a tap.
+            // Each dot acts only for itself: the switch dot switches; the record dot stops any recording, the keyboard's
+            // too (Show keyboard is in its menu), and records its own. Nothing else answers a tap.
             val mode = view.mode
             when {
                 icon == Icon.SWITCH -> if (ourKeyboard) switchBack() else switchToVoiceKeyboard(this)
-                followsKeyboard(view) -> switchToVoiceKeyboard(this)
                 mode == DotView.Mode.RECORDING -> Dictation.stop()
                 // Paused, as on the keyboard: it records on; the next tap sends.
                 mode == DotView.Mode.PAUSED -> Dictation.resume()

@@ -3,7 +3,7 @@
     <string name="tap_to_talk">Tap to talk</string>
     <string name="listening">Listening</string>
     <string name="continuing">Continuing</string>
-    <string name="paused">Paused</string>
+    <string name="paused">Paused — press × to continue later</string>
     <string name="connecting">Connecting…</string>
     <string name="processing">Processing…</string>
     <string name="processing_slow">Still working…</string>

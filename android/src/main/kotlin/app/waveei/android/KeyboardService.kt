@@ -722,17 +722,14 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
 
     override fun onPaste() {
         val clip = clip ?: return
-        if (clip.image != null) {
-            // Not kept yet (or the copy failed): the image is still on the clipboard, the field pastes it itself.
-            val kept = ClipboardHistory.image(clip.image)
-            if (kept != null) {
-                insertImage(kept)
-            } else {
-                val pasted = currentInputConnection?.performContextMenuAction(android.R.id.paste) == true
-                DebugLog.add("clipboard: image not kept yet, ${if (pasted) "pasted" else "not pasted"} by the field")
-            }
-        } else if (currentInputConnection?.commitText(clip.text, 1) != true) {
-            return
+        val image = clip.image ?: return
+        // Not kept yet (or the copy failed): the image is still on the clipboard, the field pastes it itself.
+        val kept = ClipboardHistory.image(image)
+        if (kept != null) {
+            insertImage(kept)
+        } else {
+            val pasted = currentInputConnection?.performContextMenuAction(android.R.id.paste) == true
+            DebugLog.add("clipboard: image not kept yet, ${if (pasted) "pasted" else "not pasted"} by the field")
         }
         pastedClipAt = clip.copiedAt
         render()
@@ -900,12 +897,11 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
     }
 
     /** The clip to offer in place of the status: copied a moment ago, not pasted yet, not already in the field. */
+    /** Only a copied image or a screenshot is offered: copied text never asks, it waits in the clipboard tab. */
     private fun pasteOffer(): Clip? {
-        val clip = clip ?: return null
+        val clip = clip?.takeIf { it.image != null } ?: return null
         if (clip.copiedAt == pastedClipAt || System.currentTimeMillis() - clip.copiedAt > PASTE_OFFER_MS) return null
         if (micDisabledReason != null) return null
-        val field = fieldText()
-        if (clip.image == null && field != null && field.contains(clip.text)) return null
         return clip
     }
 
@@ -1286,14 +1282,8 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
             enterAction = editorAction() ?: EditorInfo.IME_ACTION_NONE,
             insertHere = Dictation.state == Dictation.State.IDLE && insertHere != null && note == null,
             continueKept = cutOff?.let { getString(R.string.continue_cut_off, it.durationMs / 60_000, it.durationMs / 1000 % 60) },
-            paste = offer?.let {
-                when {
-                    // With its preview in the chip the label says only "Paste".
-                    it.image != null -> if (preview != null) "" else getString(R.string.clip_image)
-                    it.sensitive -> ""
-                    else -> it.text.take(PASTE_PREVIEW_CHARS)
-                }
-            },
+            // With its preview in the chip the label says only "Paste".
+            paste = offer?.let { if (preview != null) "" else getString(R.string.clip_image) },
             pasteImage = preview,
             open = openList,
             // The badge is for recordings not transcribed yet, never for a copy or a finished text.
@@ -1437,7 +1427,6 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
 
         /** How long after a copy the panel offers to paste it. */
         private const val PASTE_OFFER_MS = 3 * 60_000L
-        private const val PASTE_PREVIEW_CHARS = 60
 
         /** A copied image bigger than this is not kept. */
         private const val MAX_IMAGE_BYTES = 20L * 1024 * 1024
