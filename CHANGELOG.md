@@ -4,7 +4,7 @@ What changed in each version, as people see it. Each version's part becomes the 
 
 ## 1.2.12
 
-- Pulling the keyboard by its top strip no longer opens Style or Translate when the finger lands on them just under the strip: the pull moves the keyboard instead.
+- Pulling the keyboard by its top strip no longer opens Style or Translate by mistake: the strip takes a touch down to its full drawn height, and the capsule only a touch inside itself.
 
 ## 1.2.11
 

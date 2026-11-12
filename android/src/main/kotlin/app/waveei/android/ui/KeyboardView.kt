@@ -448,7 +448,9 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         // A drag down from the middle GRAB_ZONE of the top edge hides the keyboard (not the whole width): the strip
         // over the top row, down to its keys' top edge and no further, so the keys keep their own taps, holds and
         // slides. A touch there lights the bar at once and the panel follows from the first move.
-        grabArea.set(width * (1 - GRAB_ZONE) / 2, 0f, width * (1 + GRAB_ZONE) / 2, y(ROWS[0] - TOP_KEY / 2))
+        // It reaches GRAB_INTO_CAPSULE into the capsule under it, so it is as tall as the strip drawn; the capsule keeps
+        // the rest of itself and no more (target).
+        grabArea.set(width * (1 - GRAB_ZONE) / 2, 0f, width * (1 + GRAB_ZONE) / 2, y(ROWS[0] - TOP_KEY / 2 + GRAB_INTO_CAPSULE))
         box(Key.GRABBER, axis - GRAB_TOUCH_WIDTH * s / 2, 0f, axis + GRAB_TOUCH_WIDTH * s / 2, GRAB * s)
         middleTop = y(PANEL_TOP)
         middleBottom = TALL * s
@@ -1872,20 +1874,6 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
                     actions.onCardSlide(event.rawX, event.rawY)
                     return true
                 }
-                // The strip over the capsule is thin: a pull that lands on Style or Translate just under it is the
-                // strip's once it moves past the touch slop up or down, so it pulls the panel and never taps the capsule.
-                if ((pressed == Key.STYLE || pressed == Key.TRANSLATE) && !sliding && panelAnimator?.isRunning != true) {
-                    val dy = event.y - downY
-                    if (abs(dy) > ViewConfiguration.get(context).scaledTouchSlop && abs(dy) > abs(event.x - downX)) {
-                        release()
-                        onGrabber = true
-                        velocity = VelocityTracker.obtain().apply { addMovement(event) }
-                        // The pull starts here, so the panel does not jump by the slop already moved.
-                        downRawY = event.rawY
-                        dragging = true
-                        invalidate()
-                    }
-                }
                 if (onGrabber && !dragging) {
                     // No key there to keep a tap for: the pull starts at the first move down or up.
                     if (abs(event.y - downY) > abs(event.x - downX)) {
@@ -1936,7 +1924,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
                 // Held past a long press, the mic is push-to-talk: lifting the finger, wherever it is, stops the recording it started.
                 if (key == Key.MIC && startedOnDown && event.eventTime - event.downTime >= LONG_PRESS_MS) {
                     actions.onMicTap()
-                } else if (key != null && rects[key]?.let { expanded(it).contains(event.x, event.y) } == true) {
+                } else if (key != null && rects[key]?.let { target(key, it).contains(event.x, event.y) } == true) {
                     click(key)
                 }
             }
@@ -2192,12 +2180,19 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
      * 48 dp the targets split at the midpoint.
      */
     private fun hit(x: Float, y: Float): Key? =
-        visibleKeys().filter { rects[it]?.let { r -> expanded(r).contains(x, y) } == true }.minWithOrNull(
+        visibleKeys().filter { rects[it]?.let { r -> target(it, r).contains(x, y) } == true }.minWithOrNull(
             compareBy<Key> { distance(rects.getValue(it), x, y) }.thenBy { rects.getValue(it).let { r -> hypot(r.centerX() - x, r.centerY() - y) } },
         )
 
     private fun distance(r: RectF, x: Float, y: Float): Float =
         hypot(max(0f, max(r.left - x, x - r.right)), max(0f, max(r.top - y, y - r.bottom)))
+
+    /**
+     * Where a key takes a touch: Style and Translate only inside their half of the capsule, under the strip's reach,
+     * so a pull on the strip just over them never taps them; every other key its [expanded] target.
+     */
+    private fun target(key: Key, r: RectF): RectF =
+        if (key == Key.STYLE || key == Key.TRANSLATE) RectF(r.left, max(r.top, grabArea.bottom), r.right, r.bottom) else expanded(r)
 
     /** Touch targets of at least 48 dp around small controls. */
     private fun expanded(r: RectF): RectF {
@@ -2371,6 +2366,9 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         const val GRAB_TOUCH_WIDTH = 120f
         /** The middle share of the top edge a pull starts from. */
         const val GRAB_ZONE = 0.5f
+
+        /** How far the strip's touch reaches down into the capsule under it, dp: to the strip's drawn GRAB height. */
+        const val GRAB_INTO_CAPSULE = 9f
         const val DIVIDER = 18f
         const val OPEN_INSET = 3f
         const val OPEN_INNER = 2f
