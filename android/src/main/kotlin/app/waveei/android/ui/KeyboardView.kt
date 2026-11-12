@@ -49,6 +49,7 @@ import app.waveei.android.Stats
 import java.util.EnumMap
 import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.atanh
 import kotlin.math.ceil
 import kotlin.math.cos
 import kotlin.math.exp
@@ -57,6 +58,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
 import kotlin.math.sqrt
+import kotlin.math.tanh
 
 /**
  * The keyboard panel drawn on a Canvas: a 20 dp grabber strip over a grid of four rows and
@@ -342,8 +344,21 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
     private var springing = false
     private var caught = false
 
-    /** How far the finger has pulled the panel down, px; the panel itself goes less far ([band]). */
+    /** How far the finger has pulled the panel, px, down above 0 and up below; the panel itself goes less far ([band]). */
     private var pull = 0f
+
+    /**
+     * How far the panel's top edge has given to the pull, past where the panel sits, px: squeezed down above 0,
+     * stretched up below. The bottom holds, so the keys between squeeze together or stretch apart; the size stays.
+     */
+    private var stretch = 0f
+        set(value) {
+            if (field == value) return
+            field = value
+            invalidate()
+            // The shadow over the app is the window root's.
+            (parent as? View)?.invalidate()
+        }
 
     /** The pull is past HIDE_PULL: letting go now hides the keyboard. */
     private var pastHide = false
@@ -538,8 +553,8 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         }
     }
 
-    /** The room the keyboard window leaves above the panel for its shadow, in pixels. */
-    val topRoom: Int get() = ceil(TOP_ROOM * resources.displayMetrics.density).toInt()
+    /** The room the keyboard window leaves above the panel for its shadow and its stretch up, in pixels. */
+    val topRoom: Int get() = ceil((TOP_ROOM + RISE) * resources.displayMetrics.density).toInt()
 
     /**
      * The panel's soft shadow up over the app, in [topRoom]: drawn by the window's root, behind this view and in the
@@ -553,7 +568,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         }
         panelShadow.color = colors.topShadow
         val r = CORNER * s
-        val y = top + translationY - TOP_SHADOW_DY * s
+        val y = top + translationY + stretch - TOP_SHADOW_DY * s
         panelShadowRect.set(left.toFloat(), y, right.toFloat(), y + height + r)
         canvas.drawRoundRect(panelShadowRect, r, r, panelShadow)
     }
@@ -563,6 +578,12 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
     override fun onDraw(canvas: Canvas) {
         updateWater()
         updateSpring()
+        // Pulled on its strip, the panel gives as a rubber band: its top edge goes with the finger, its bottom holds.
+        val give = stretch != 0f && height > 0
+        if (give) {
+            canvas.save()
+            canvas.scale(1f, (height - stretch) / height, 0f, height.toFloat())
+        }
         drawPanel(canvas)
         drawGrabber(canvas)
         drawTopRow(canvas)
@@ -582,6 +603,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
             canvas.drawText(cursorLabel, width / 2f, baseline(hintText, cy + CURSOR_TEXT * s * 0.9f), hintText)
             hintText.textAlign = Paint.Align.LEFT
         }
+        if (give) canvas.restore()
         if (shouldAnimate()) postInvalidateOnAnimation()
     }
 
@@ -1785,7 +1807,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
                 downRawY = event.rawY
                 downPointer = event.getPointerId(0)
                 dragging = false
-                // The strip reacts only to a drag down.
+                // The strip reacts only to a drag, down or up.
                 onGrabber = grabArea.contains(event.x, event.y) && (panelAnimator?.isRunning != true || springing)
                 caught = false
                 if (onGrabber && springing) {
@@ -1794,7 +1816,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
                     panelAnimator?.cancel()
                     springing = false
                     caught = true
-                    downRawY = event.rawY - unband(panel().translationY)
+                    downRawY = event.rawY - pullNow()
                 }
                 if (onGrabber) velocity = VelocityTracker.obtain().apply { addMovement(event) }
                 // The top row's 48 dp touch targets reach a little over its edge: on the strip, the strip has it.
@@ -1851,16 +1873,19 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
                     return true
                 }
                 if (onGrabber && !dragging) {
-                    // No key there to keep a tap for: the pull starts at the first move down.
-                    if (event.y - downY > abs(event.x - downX)) {
+                    // No key there to keep a tap for: the pull starts at the first move down or up.
+                    if (abs(event.y - downY) > abs(event.x - downX)) {
                         dragging = true
                         invalidate()
                     }
                 }
                 if (dragging) {
-                    // The panel holds back against the finger, ever more the further it goes; upward is held at 0.
-                    pull = max(0f, event.rawY - downRawY)
-                    panel().translationY = band(pull)
+                    // The panel holds back against the finger, ever more the further it goes, up as down. Down, it
+                    // moves and its keys squeeze together a little; up, it stays and its keys stretch apart into
+                    // the room above it.
+                    pull = event.rawY - downRawY
+                    panel().translationY = max(0f, band(pull))
+                    stretch = if (pull >= 0f) band(pull) * SQUEEZE else -rise(band(-pull))
                     // Past the point where letting go hides it, a tick, and another back short of it.
                     val past = pull > height * HIDE_PULL
                     if (past != pastHide) {
@@ -1963,7 +1988,11 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
     // The keyboard hidden or gone mid-touch may never get the finger's UP or CANCEL: the bar goes out with it.
     override fun onWindowVisibilityChanged(visibility: Int) {
         super.onWindowVisibilityChanged(visibility)
-        if (visibility == VISIBLE) return
+        // Shown again after the grabber hid it: the keys come back unsqueezed, as the service puts the panel back.
+        if (visibility == VISIBLE) {
+            if (!springing) stretch = 0f
+            return
+        }
         // Hidden after all: the check for a hide that did not happen would pull a keyboard shown again within it.
         removeCallbacks(hideCheck)
         if (dragging) endDrag(cancelled = true) else endGrab()
@@ -1982,6 +2011,20 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
     /** The finger's pull for where the panel sits: [band] backwards, for a panel caught on its way home. */
     private fun unband(at: Float): Float =
         if (height <= 0) at else height / PULL_GIVE * (at / (height - at.coerceAtMost(height - 1f)))
+
+    /** How far the top edge rises for a [band]ed pull up: as far at first, then ever less, never past the RISE room. */
+    private fun rise(at: Float): Float {
+        val room = RISE * resources.displayMetrics.density
+        return room * tanh(at / room)
+    }
+
+    /** The finger's pull for where the panel and its top edge are, for a panel caught on its way home. */
+    private fun pullNow(): Float {
+        val at = panel().translationY
+        if (at > 0f || stretch >= 0f) return unband(at)
+        val room = RISE * resources.displayMetrics.density
+        return -unband(room * atanh((-stretch / room).coerceAtMost(RISE_CATCH)))
+    }
 
     /**
      * The finger pulled past HIDE_PULL of the height, or flung so far as Material's bottom sheet would hide (BottomSheetBehavior.
@@ -2018,7 +2061,7 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
         postDelayed(hideCheck, HIDE_CHECK_MS)
     }
 
-    private val hideCheck = Runnable { panel().takeIf { it.translationY != 0f && isShown }?.let(::springBack) }
+    private val hideCheck = Runnable { panel().takeIf { (it.translationY != 0f || stretch != 0f) && isShown }?.let(::springBack) }
 
     /** Caught on its way home and let go without a drag: it goes on home. */
     private fun homeIfCaught() {
@@ -2030,19 +2073,27 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
     private fun springBack(panel: View) {
         panelAnimator?.cancel()
         val from = panel.translationY
-        if (reduceMotion() || from == 0f) {
+        val stretchFrom = stretch
+        if (reduceMotion() || (from == 0f && stretchFrom == 0f)) {
             panel.translationY = 0f
+            stretch = 0f
             return
         }
         panelAnimator = ValueAnimator.ofFloat(0f, SPRING_BACK_MS.toFloat()).apply {
             duration = SPRING_BACK_MS
             interpolator = LINEAR
             // Home is as far as it goes: once there it stays, so the spring's next swing cannot push it down again.
-            addUpdateListener { panel.translationY = min(panel.translationY, max(0f, spring(from, it.animatedValue as Float))) }
+            // The top edge springs back on the same spring.
+            addUpdateListener {
+                val t = it.animatedValue as Float
+                panel.translationY = min(panel.translationY, max(0f, spring(from, t)))
+                stretch = spring(stretchFrom, t)
+            }
             addListener(object : android.animation.AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: android.animation.Animator) {
                     springing = false
                     panel.translationY = 0f
+                    stretch = 0f
                 }
             })
             springing = true
@@ -2256,6 +2307,15 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
          * first).
          */
         const val PULL_GIVE = 0.8f
+
+        /** The room over the panel its top edge stretches up into, pulled up, in dp; the pull up gives as the pull down. */
+        const val RISE = 32f
+
+        /** Pulled down, how much more than the panel its top edge comes down, a share: the keys squeeze together a little. */
+        const val SQUEEZE = 0.1f
+
+        /** Caught on its way home, the top edge is never taken for at the RISE room's end, where the pull would be endless. */
+        const val RISE_CATCH = 0.99f
 
         // The reference panel, in dp: 411 × 296, a 16 dp grabber strip on a 280 dp grid whose bottom keys end 11.5 dp
         // over its bottom, which lifts them off the navigation bar (the top row 36 dp,

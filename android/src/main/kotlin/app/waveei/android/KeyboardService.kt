@@ -189,13 +189,19 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         list = ListPanel(this).apply { visibility = View.GONE }
         emoji = EmojiPanel(this, ::typeEmoji, ::onBackspace).apply { visibility = View.GONE }
         card = ListCard(this)
-        // Room above the panel for its shadow over the app; the app keeps that strip and its touches (onComputeInsets).
+        // Room above the panel for its shadow over the app and its stretch up when pulled; the app keeps that strip and
+        // its touches (onComputeInsets).
         val root = object : FrameLayout(this) {
             override fun dispatchDraw(canvas: Canvas) {
                 keyboard.drawShadow(canvas)
                 super.dispatchDraw(canvas)
             }
-        }.apply { setPadding(0, keyboard.topRoom, 0, 0) }
+        }.apply {
+            setPadding(0, keyboard.topRoom, 0, 0)
+            // The keys stretched up are drawn over their own top, into that room.
+            clipChildren = false
+            clipToPadding = false
+        }
         root.addView(keyboard, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT))
         root.addView(list, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, 0))
         root.addView(emoji, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, 0))

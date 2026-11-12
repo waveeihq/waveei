@@ -5,6 +5,7 @@ What changed in each version, as people see it. Each version's part becomes the 
 ## 1.2.11
 
 - A dictation in Claude (and other apps that refresh their text field while you type) goes into the field again instead of waiting as Insert here.
+- The keyboard's top strip gives as a rubber band both ways: pulled up, the keys stretch apart a little; pulled down, they squeeze together a little; let go, they spring back.
 
 ## 1.2.10
 
