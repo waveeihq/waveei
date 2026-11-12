@@ -2,6 +2,10 @@
 
 What changed in each version, as people see it. Each version's part becomes the notes of its release.
 
+## 1.2.12
+
+- Pulling the keyboard by its top strip no longer opens Style or Translate when the finger lands on them just under the strip: the pull moves the keyboard instead.
+
 ## 1.2.11
 
 - A dictation in Claude (and other apps that refresh their text field while you type) goes into the field again instead of waiting as Insert here.

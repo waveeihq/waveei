@@ -1872,6 +1872,20 @@ class KeyboardView(context: Context, private val actions: Actions) : View(contex
                     actions.onCardSlide(event.rawX, event.rawY)
                     return true
                 }
+                // The strip over the capsule is thin: a pull that lands on Style or Translate just under it is the
+                // strip's once it moves past the touch slop up or down, so it pulls the panel and never taps the capsule.
+                if ((pressed == Key.STYLE || pressed == Key.TRANSLATE) && !sliding && panelAnimator?.isRunning != true) {
+                    val dy = event.y - downY
+                    if (abs(dy) > ViewConfiguration.get(context).scaledTouchSlop && abs(dy) > abs(event.x - downX)) {
+                        release()
+                        onGrabber = true
+                        velocity = VelocityTracker.obtain().apply { addMovement(event) }
+                        // The pull starts here, so the panel does not jump by the slop already moved.
+                        downRawY = event.rawY
+                        dragging = true
+                        invalidate()
+                    }
+                }
                 if (onGrabber && !dragging) {
                     // No key there to keep a tap for: the pull starts at the first move down or up.
                     if (abs(event.y - downY) > abs(event.x - downX)) {
