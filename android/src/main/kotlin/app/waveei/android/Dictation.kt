@@ -199,6 +199,13 @@ object Dictation {
     /** No input of our keyboard started since dictation [id] began: the field in front is still the one it was made in. */
     private fun sameInput(id: Long) = id == startedId && inputs == startedInputs
 
+    /**
+     * Dictation [id] may be sent as it goes in: it is the one going in now, and our keyboard's input has not started
+     * again since it began. Back in its field after leaving it, the text goes in but is not sent: another chat of the
+     * same app has the same field.
+     */
+    fun sendable(id: Long) = id == current && sameInput(id)
+
     /** The dictation is a kept recording sent again: Cancel stops the attempt, never the audio. */
     private var retried = false
     private var capture: AudioCapture? = null
@@ -827,10 +834,13 @@ object Dictation {
         if (text != raw) Trace.current?.text("dictation: final", text)
         val other = targets.firstOrNull { it.seesOtherField(entry?.app, entry?.field) }
         if (other != null) DebugLog.add("dictation: ${other.javaClass.simpleName} sees another field in front")
-        // Our keyboard's input started again since the dictation began: the field in front may be another chat.
+        // Our keyboard's input started again since the dictation began (the person left the app and came back): it
+        // goes in by itself only into the very field it began in, as the target tells it (same app and field), and
+        // is not sent (sendable). A dictation tied to no field is offered as Insert here then.
         val moved = !resending && !sameInput(id)
-        if (moved) DebugLog.add("dictation: the keyboard's input started again, offered as Insert here")
-        val target = if (resending || other != null || moved) null
+        val unknown = moved && entry?.field == null
+        if (moved) DebugLog.add("dictation: the keyboard's input started again, ${if (unknown) "offered as Insert here" else "goes in only into its own field"}")
+        val target = if (resending || other != null || unknown) null
         else targets.firstOrNull { it.insert(text, entry?.app, entry?.field, id) }
         if (!keepMessage) message = null
         if (target != null) {
@@ -848,8 +858,8 @@ object Dictation {
             val from = entry?.app?.takeIf { it.isNotEmpty() && !resending }
             if (from != null) {
                 // Its field no longer told apart, it goes in only by Insert here, in any field.
-                waiting = Waiting(id, text, from, entry.field.takeUnless { moved }, SystemClock.elapsedRealtime() + WAIT_FOR_FIELD_MS)
-                DebugLog.add("dictation: not inserted, saved to buffer; ${if (moved) "offered as Insert here" else "goes in on return"}")
+                waiting = Waiting(id, text, from, entry.field, SystemClock.elapsedRealtime() + WAIT_FOR_FIELD_MS)
+                DebugLog.add("dictation: not inserted, saved to buffer; ${if (entry.field == null) "offered as Insert here" else "goes in on return"}")
             } else {
                 message = app.getString(R.string.saved_to_buffer)
                 DebugLog.add("dictation: no field, saved to buffer")
@@ -871,14 +881,9 @@ object Dictation {
             notifyChanged()
             return
         }
-        // It goes back by itself only into the very field it was made in: our keyboard's input not started again since,
-        // and the dot's field the same element. Anywhere else our keyboard offers it as Insert here.
+        // It goes back by itself only into the very field it was made in: the keyboard's field of the same app, id and
+        // name, or the dot's same element. Anywhere else our keyboard offers it as Insert here.
         val field = wait.field ?: return
-        if (!sameInput(wait.id)) {
-            waiting = Waiting(wait.id, wait.text, wait.app, null, wait.until)
-            DebugLog.add("dictation: the keyboard's input started again, the waiting text is offered as Insert here")
-            return notifyChanged()
-        }
         if (targets.any { it.seesOtherField(wait.app, field) }) return
         val target = targets.firstOrNull { (it.knowsField(field) || !field.startsWith(DotService.FIELD_PREFIX)) && it.insert(wait.text, wait.app, field, wait.id) }
             ?: return

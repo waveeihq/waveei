@@ -2,6 +2,10 @@
 
 What changed in each version, as people see it. Each version's part becomes the notes of its release.
 
+## 1.2.13
+
+- A dictation goes into its own field again after you leave the app while it records and come back: no more Insert here for it. It is not sent by itself then, since another chat of the same app has the same field.
+
 ## 1.2.12
 
 - Pulling the keyboard by its top strip no longer opens Style or Translate by mistake: the strip takes a touch down to its full drawn height, and the capsule only a touch inside itself.

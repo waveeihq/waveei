@@ -422,9 +422,9 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         }
         val before = input.getTextBeforeCursor(SEPARATOR_CONTEXT, 0)?.toString().orEmpty()
         // A message sent at once needs nothing after it; otherwise the separator follows the text right away.
-        // Sent only as the dictation goes in, which is only into the field it began in (Dictation.sameInput); never
-        // later, from its wait, when the person may have typed on.
-        val send = (prefs.autoSend || sendOnce) && id != null && id == Dictation.current && !Dictation.styleDropped
+        // Sent only as the dictation goes in, into the field it began in with no input started since (Dictation.sendable);
+        // never later, from its wait, when the person may have typed on.
+        val send = (prefs.autoSend || sendOnce) && id != null && Dictation.sendable(id) && !Dictation.styleDropped
         val after = if (send) "" else separatorAfter(input.getTextAfterCursor(1, 0)?.toString().orEmpty(), prefs.separator)
         val insertion = separatorBefore(before, prefs.separator) + text + after
         // Some chat apps drop the field while the keyboard stays: a commit into a field that is gone
