@@ -2,6 +2,10 @@
 
 What changed in each version, as people see it. Each version's part becomes the notes of its release.
 
+## 1.2.14
+
+- Auto-send works for a dictation that went back into its own field after you left the app and came back.
+
 ## 1.2.13
 
 - A dictation goes into its own field again after you leave the app while it records and come back: no more Insert here for it. It is not sent by itself then, since another chat of the same app has the same field.

@@ -199,12 +199,8 @@ object Dictation {
     /** No input of our keyboard started since dictation [id] began: the field in front is still the one it was made in. */
     private fun sameInput(id: Long) = id == startedId && inputs == startedInputs
 
-    /**
-     * Dictation [id] may be sent as it goes in: it is the one going in now, and our keyboard's input has not started
-     * again since it began. Back in its field after leaving it, the text goes in but is not sent: another chat of the
-     * same app has the same field.
-     */
-    fun sendable(id: Long) = id == current && sameInput(id)
+    /** Dictation [id] may be sent as it goes in: it is the one going in now, into its own field (never from its wait). */
+    fun sendable(id: Long) = id == current
 
     /** The dictation is a kept recording sent again: Cancel stops the attempt, never the audio. */
     private var retried = false
@@ -835,8 +831,8 @@ object Dictation {
         val other = targets.firstOrNull { it.seesOtherField(entry?.app, entry?.field) }
         if (other != null) DebugLog.add("dictation: ${other.javaClass.simpleName} sees another field in front")
         // Our keyboard's input started again since the dictation began (the person left the app and came back): it
-        // goes in by itself only into the very field it began in, as the target tells it (same app and field), and
-        // is not sent (sendable). A dictation tied to no field is offered as Insert here then.
+        // goes in by itself only into the very field it began in, as the target tells it (same app and field). A
+        // dictation tied to no field is offered as Insert here then.
         val moved = !resending && !sameInput(id)
         val unknown = moved && entry?.field == null
         if (moved) DebugLog.add("dictation: the keyboard's input started again, ${if (unknown) "offered as Insert here" else "goes in only into its own field"}")
