@@ -878,10 +878,12 @@ object Dictation {
             return
         }
         // It goes back by itself only into the very field it was made in: the keyboard's field of the same app, id and
-        // name, or the dot's same element. Anywhere else our keyboard offers it as Insert here.
+        // name, or the dot's same element, and only through the target that made it: the dot's whole-text writes and
+        // clipboard pastes, tried on every field event while it waits, put the text in again and again.
+        // Anywhere else our keyboard offers it as Insert here.
         val field = wait.field ?: return
         if (targets.any { it.seesOtherField(wait.app, field) }) return
-        val target = targets.firstOrNull { (it.knowsField(field) || !field.startsWith(DotService.FIELD_PREFIX)) && it.insert(wait.text, wait.app, field, wait.id) }
+        val target = targets.firstOrNull { it.knowsField(field) && it.insert(wait.text, wait.app, field, wait.id) }
             ?: return
         endWait(wait, target, "back in its app")
     }

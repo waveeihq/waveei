@@ -4,7 +4,7 @@ What changed in each version, as people see it. Each version's part becomes the 
 
 ## 1.2.14
 
-- A long dictation goes in once: apps that turn a long text into an attachment (Claude does) no longer get it again and again.
+- A dictation waiting for its field goes in once: in Claude it could be put in again and again.
 
 ## 1.2.13
 
