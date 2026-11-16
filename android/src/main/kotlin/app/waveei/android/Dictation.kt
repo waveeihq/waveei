@@ -159,22 +159,16 @@ object Dictation {
     private val observers = LinkedHashSet<Observer>()
     private val targets = ArrayList<Target>()
 
-    /** A finished dictation whose app was left before it was ready: it goes in once the person is back there. */
-    private class Waiting(val id: Long, val text: String, val app: String, val field: String?, val until: Long)
+    /** A finished dictation that found no field to go into: our keyboard offers it as Insert here, in any field. */
+    private class Waiting(val id: Long, val until: Long)
     private var waiting: Waiting? = null
 
-    /**
-     * A finished dictation waits for its app; the dot keeps showing that something is on its way. Taken from the
-     * buffer (our keyboard's Insert here), it waits no more.
-     */
+    /** A finished dictation waits for Insert here; taken from the buffer, it waits no more. */
     val isWaiting: Boolean
         get() = waiting.let { it != null && SystemClock.elapsedRealtime() < it.until && BufferStore.get(it.id)?.status == BufferStatus.READY }
 
-    /** The buffer row of the dictation waiting for its field, which our keyboard offers in any field. */
+    /** The buffer row of the dictation waiting for Insert here, which our keyboard offers in any field. */
     val waitingId: Long? get() = waiting?.id?.takeIf { isWaiting }
-
-    /** The waiting dictation was made outside any field: it goes in only by Insert here. */
-    val waitsForAnyField: Boolean get() = isWaiting && waiting?.field == null
 
     /** The dictation being recorded or processed: its id is its start time. */
     var current: Long? = null
@@ -853,9 +847,9 @@ object Dictation {
             BufferStore.dropAudio(id)
             val from = entry?.app?.takeIf { it.isNotEmpty() && !resending }
             if (from != null) {
-                // Its field no longer told apart, it goes in only by Insert here, in any field.
-                waiting = Waiting(id, text, from, entry.field, SystemClock.elapsedRealtime() + WAIT_FOR_FIELD_MS)
-                DebugLog.add("dictation: not inserted, saved to buffer; ${if (entry.field == null) "offered as Insert here" else "goes in on return"}")
+                // No field took it now: it never waits to go in by itself later, our keyboard offers it as Insert here.
+                waiting = Waiting(id, SystemClock.elapsedRealtime() + WAIT_FOR_FIELD_MS)
+                DebugLog.add("dictation: not inserted, saved to buffer; offered as Insert here")
             } else {
                 message = app.getString(R.string.saved_to_buffer)
                 DebugLog.add("dictation: no field, saved to buffer")
@@ -864,47 +858,11 @@ object Dictation {
         finishIdle()
     }
 
-    /**
-     * A field has appeared: the waiting dictation goes in only if it is the very field it was made in, checked
-     * by a target that can tell fields apart. Any other field gets it by Insert here, or from the buffer.
-     */
-    fun deliverWaiting() {
-        val wait = waiting ?: return
-        if (state != State.IDLE) return
-        // Too late, or already taken from the buffer: the wait ends there.
-        if (!isWaiting) {
-            waiting = null
-            notifyChanged()
-            return
-        }
-        // It goes back by itself only into the very field it was made in: the keyboard's field of the same app, id and
-        // name, or the dot's same element, and only through the target that made it: the dot's whole-text writes and
-        // clipboard pastes, tried on every field event while it waits, put the text in again and again.
-        // Anywhere else our keyboard offers it as Insert here.
-        val field = wait.field ?: return
-        if (targets.any { it.seesOtherField(wait.app, field) }) return
-        val target = targets.firstOrNull { it.knowsField(field) && it.insert(wait.text, wait.app, field, wait.id) }
-            ?: return
-        endWait(wait, target, "back in its app")
-    }
-
     /** The field a dictation just went into, as every target can tell it: it has the focus now. */
     private fun learningField() = Learning.Field(
         targets.firstNotNullOfOrNull { it.learningField?.node },
         targets.firstNotNullOfOrNull { it.learningField?.signature },
     )
-
-    private fun endWait(wait: Waiting, target: Target, how: String) {
-        waiting = null
-        if (target.incognito) {
-            BufferStore.delete(wait.id)
-        } else {
-            BufferStore.update(wait.id) { it.copy(status = BufferStatus.INSERTED) }
-            Learning.inserted(wait.text, wait.app, learningField())
-        }
-        DebugLog.add("dictation: $how, inserted ${wait.text.length} chars")
-        notifyChanged()
-    }
 
     /** No words came back: a new recording goes, but one the user kept (a retry, a continued one) stays kept. */
     private fun nothingHeard(id: Long) {

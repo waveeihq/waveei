@@ -2,6 +2,11 @@
 
 What changed in each version, as people see it. Each version's part becomes the notes of its release.
 
+## 1.2.15
+
+- A dictation that finds no field to go into is offered at once as Insert here on the keyboard, instead of the dot spinning while it waits for the field.
+- The floating dot no longer flashes up for a moment after an update.
+
 ## 1.2.14
 
 - A dictation waiting for its field goes in once: in Claude it could be put in again and again.

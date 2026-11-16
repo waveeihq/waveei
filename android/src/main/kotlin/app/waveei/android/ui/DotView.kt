@@ -134,8 +134,8 @@ class DotView(context: Context, private val actions: Actions) : View(context) {
             if (visibility == VISIBLE) fadeTo(value)
         }
 
-    /** The opacity actually drawn: it moves towards [opacity]. */
-    private var drawn = 1f
+    /** The opacity actually drawn: it moves towards [opacity]; a new dot fades in from nothing when it first shows. */
+    private var drawn = 0f
     private var fader: ValueAnimator? = null
 
     /** Opened by a tap, or busy with a dictation: the dot stays ×1.3 until it rests. */

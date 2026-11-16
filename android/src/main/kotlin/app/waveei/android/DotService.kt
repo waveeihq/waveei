@@ -182,8 +182,6 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
             if (!event.isPassword) event.packageName?.toString()?.takeIf(Learning::watches)?.let { Learning.seen(it, Learning.Field(event.source, null), event.text.joinToString("")) }
             return
         }
-        // Back in the app a finished dictation was made in: it goes into the field there, whichever keyboard is up.
-        Dictation.deliverWaiting()
         if (event.eventType == AccessibilityEvent.TYPE_WINDOWS_CHANGED || event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             // The keyboard's own return to the app it was left in: not one of the floating icons, so their switch does
             // not stop it.
@@ -258,9 +256,8 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
     private fun render() {
         if (!::prefs.isInitialized) return
         if (Dictation.state == Dictation.State.IDLE && !Dictation.isWaiting) micDictation = false
-        // A finished dictation waiting for its app still shows as on its way; one made outside any field is
-        // offered by our keyboard's Insert here instead, so the dot is free.
-        val state = if (Dictation.isWaiting && !Dictation.waitsForAnyField) Dictation.State.PROCESSING else Dictation.state
+        // A finished dictation that found no field is offered by our keyboard's Insert here: the dot is free.
+        val state = Dictation.state
         val locked = getSystemService(KeyguardManager::class.java).isKeyguardLocked
         // The keyboard knows it is up before the window list shows it, and while the list drops its window for a moment.
         val ours = ourKeyboard || KeyboardService.windowShown
@@ -385,12 +382,12 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
             place(added)
             added.tucked = tucked
             added.settleTuck()
+            // Added unseen: show() brings it up only if it is wanted. Shown here, a dot not wanted (the record dot's
+            // window is always there) flashed up and dissolved each time the service connected, after every update.
+            added.visibility = View.GONE
             runCatching { overlay.addView(added, params) }
                 .onSuccess {
                     view = added
-                    added.appear(from = 0f)
-                    // Already visible, so show() will not wake it: without this a new icon never rests.
-                    wake()
                     log("overlay added")
                 }
                 .onFailure { log("could not add the overlay: ${it.javaClass.simpleName}") }

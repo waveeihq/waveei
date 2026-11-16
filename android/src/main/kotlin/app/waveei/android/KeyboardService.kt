@@ -283,7 +283,6 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         BufferStore.addListener(bufferChanged)
         // Back in a field after another keyboard: what the person corrected there in the last dictation.
         info.packageName?.takeIf { micDisabledReason == null && Learning.watches(it) }?.let { app -> fieldText()?.let { Learning.seen(app, Learning.Field(null, signature(info)), it) } }
-        Dictation.deliverWaiting()
         // The week's free minutes used up: the mic stays grey until the server says Tide was bought.
         if (Account.freeUsedUp) Dictation.refreshPlan { main.post(::render) }
         findInsertHere()
