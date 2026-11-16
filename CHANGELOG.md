@@ -2,6 +2,10 @@
 
 What changed in each version, as people see it. Each version's part becomes the notes of its release.
 
+## 1.2.14
+
+- A long dictation goes in once: apps that turn a long text into an attachment (Claude does) no longer get it again and again.
+
 ## 1.2.13
 
 - A dictation goes into its own field again after you leave the app while it records and come back, and auto-send sends it as usual: no more Insert here for it.

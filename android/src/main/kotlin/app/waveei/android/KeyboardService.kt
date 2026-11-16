@@ -427,16 +427,16 @@ class KeyboardService : InputMethodService(), KeyboardView.Actions, Dictation.Ob
         val send = (prefs.autoSend || sendOnce) && id != null && Dictation.sendable(id) && !Dictation.styleDropped
         val after = if (send) "" else separatorAfter(input.getTextAfterCursor(1, 0)?.toString().orEmpty(), prefs.separator)
         val insertion = separatorBefore(before, prefs.separator) + text + after
-        // Some chat apps drop the field while the keyboard stays: a commit into a field that is gone
-        // fails or reads back something else, and then the text goes to the next target or waits for the field. A field
-        // that took the text and changed it (capitals, a length limit, quotes) has it, its start at least: never twice.
-        val landed = input.commitText(insertion, 1) && input.getTextBeforeCursor(insertion.length, 0)?.toString().let { now ->
-            now != null && (now.trim() == insertion.trim() || now.contains(text.trim().take(LANDED_PROBE), ignoreCase = true))
-        }
-        if (!landed) {
+        // Some chat apps drop the field while the keyboard stays: a commit into a field that is gone fails, and then the
+        // text goes to the next target or waits for the field. A commit the field accepted is never made twice, even
+        // when the field does not show the text: some apps take a long text as an attachment (Claude does), and each
+        // new write would add one more.
+        if (!input.commitText(insertion, 1)) {
             DebugLog.add("keyboard: the field did not take the text, not inserted here")
             return false
         }
+        val shown = input.getTextBeforeCursor(insertion.length, 0)?.toString()?.contains(text.trim().take(LANDED_PROBE), ignoreCase = true)
+        if (shown != true) DebugLog.add("keyboard: the field took the text but does not show it (an attachment?), not inserted again")
         if (send) {
             sendOnce = false
             send(input, currentInputEditorInfo?.packageName.orEmpty(), text)

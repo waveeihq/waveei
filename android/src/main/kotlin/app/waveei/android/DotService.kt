@@ -1046,8 +1046,9 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
             FieldText.pasted(current, currentText(node), insertion)
         if (!written && !paste(node, current, insertion, start, end)) return false
         DebugLog.add("dot: inserted into ${describe(node)}")
+        // A pasted text is never pasted again: the field may show it as an attachment.
         val insertedAt = SystemClock.uptimeMillis()
-        main.postDelayed({ checkKept(node, insertion, insertedAt) }, KEPT_CHECK_MS)
+        if (written) main.postDelayed({ checkKept(node, insertion, insertedAt) }, KEPT_CHECK_MS)
         return true
     }
 
@@ -1140,8 +1141,14 @@ class DotService : AccessibilityService(), Dictation.Observer, Dictation.Target 
         select(field, start, end)
         val action = field.actionList.firstOrNull { it.id != AccessibilityNodeInfo.ACTION_PASTE && it.label?.contains("paste", ignoreCase = true) == true }
             ?.id ?: AccessibilityNodeInfo.ACTION_PASTE
-        val done = field.performAction(action) && waitFor(field) { FieldText.pasted(before, it, insertion) }
-        DebugLog.add(if (done) "dot: inserted by paste" else "dot: paste did not land either")
+        // A paste the field accepted is never repeated, even when the field does not show the text: some apps take a
+        // long paste as an attachment (Claude does), and each new paste would add one more.
+        val done = field.performAction(action)
+        DebugLog.add(
+            if (!done) "dot: paste did not land either"
+            else if (waitFor(field) { FieldText.pasted(before, it, insertion) }) "dot: inserted by paste"
+            else "dot: pasted, the field does not show it (an attachment?), not pasted again",
+        )
         main.postDelayed({
             val now = runCatching { clipboard.primaryClip?.getItemAt(0)?.text?.toString() }.getOrNull()
             if (now != insertion) return@postDelayed
